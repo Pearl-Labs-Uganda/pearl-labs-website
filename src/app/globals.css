@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+@theme {
+  --color-orange: #d4700a;
+  --color-orange-mid: #e8850f;
+  --color-orange-pale: #fdf3e8;
+  --color-green: #0f3320;
+  --color-green-mid: #1c4d31;
+  --color-green-light: #2a6642;
+  --color-gold: #c49a3c;
+  --color-gold-light: #ddb96a;
+  --color-cream: #f8f4ee;
+  --color-off-white: #fafaf7;
+  --color-text-dark: #0e0e0e;
+  --color-text-mid: #52524e;
+  --font-heading: var(--font-fraunces);
+  --font-body: var(--font-dm-sans);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), sans-serif;
+  background: var(--color-off-white);
+  color: var(--color-text-dark);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animations */
+@keyframes drift {
+  to {
+    transform: translate(24px, -20px) scale(1.05);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Hero dot grid */
+.hero-dot-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(
+    circle,
+    rgba(212, 112, 10, 0.18) 1px,
+    transparent 1px
+  );
+  background-size: 38px 38px;
+  mask-image: radial-gradient(
+    ellipse 70% 80% at 60% 50%,
+    black 30%,
+    transparent 100%
+  );
+}
+
+/* Orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+
+/* Nav link underline effect */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--color-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s;
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* Project card bottom accent */
+.project-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-orange), var(--color-gold));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s;
+}
+.project-card:hover::after {
+  transform: scaleX(1);
+}
+
+/* Researcher avatar ring */
+.r-avatar::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-orange), var(--color-gold));
+  z-index: -1;
+}
+
+/* Demo loading dots */
+.demo-loading span {
+  animation: bounce 1s infinite;
+}
+.demo-loading span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.demo-loading span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animate on load */
+.animate-fade-up {
+  animation: fadeUp 0.8s ease both;
+}
+.animate-fade-up-1 {
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+.animate-fade-up-2 {
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+.animate-fade-up-3 {
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+.animate-fade-up-4 {
+  animation: fadeUp 0.8s 0.45s ease both;
+}
+
+/* Badge dot */
+.badge-dot {
+  animation: pulse 2s infinite;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
