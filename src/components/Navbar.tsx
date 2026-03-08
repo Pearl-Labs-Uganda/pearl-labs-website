@@ -51,6 +51,14 @@ export default function Navbar() {
         </li>
         <li className="max-md:hidden">
           <Link
+            href="#services"
+            className="nav-link no-underline text-[.855rem] font-medium text-text-mid tracking-wide hover:text-orange transition-colors"
+          >
+            Services
+          </Link>
+        </li>
+        <li className="max-md:hidden">
+          <Link
             href="#researchers"
             className="nav-link no-underline text-[.855rem] font-medium text-text-mid tracking-wide hover:text-orange transition-colors"
           >
