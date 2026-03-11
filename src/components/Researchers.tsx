@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 const researchers = [
   {
     initials: "AM",
-    name: "Dr. Amara Mutesa",
+    name: "Dr. Amara Mutesaaaaa",
     role: "Director of Research",
     color: "bg-green",
     focus:
