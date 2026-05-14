@@ -24,7 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${fraunces.variable} ${dmSans.variable} antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${fraunces.variable} ${dmSans.variable} antialiased`}
+      >
         {children}
       </body>
     </html>

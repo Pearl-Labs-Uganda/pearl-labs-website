@@ -73,6 +73,14 @@ export default function Navbar() {
             Try Models
           </Link>
         </li>
+        <li className="max-md:hidden">
+          <Link
+            href="/internship"
+            className="nav-link no-underline text-[.855rem] font-medium text-text-mid tracking-wide hover:text-orange transition-colors"
+          >
+            Internship
+          </Link>
+        </li>
         <li>
           <Link
             href="#contact"
