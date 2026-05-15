@@ -10,7 +10,7 @@ export default function Footer() {
           alt="Pearl AI Labs"
           width={28}
           height={28}
-          className="object-contain brightness-0 invert"
+          className="object-contain"
         />
         <span className="font-heading text-[1.15rem] font-bold text-white tracking-tight">
           Pearl <span className="text-orange italic">AI</span> Labs
