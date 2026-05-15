@@ -200,7 +200,7 @@ export default function InternshipOpportunities() {
 const s: Record<string, React.CSSProperties> = {
   page: { fontFamily: "'Inter', system-ui, sans-serif", background: b.cream, color: b.textPrimary, minHeight: "100vh" },
   hero: { maxWidth: 960, margin: "0 auto", padding: "80px 32px 64px" },
-  pill: { display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase", color: b.textMuted, border: `1px solid ${b.border}`, borderRadius: 999, padding: "5px 14px", marginBottom: 32 },
+  pill: { display: "inline-flex", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: "clamp(10px, 2.2vw, 11px)", letterSpacing: "0.13em", textTransform: "uppercase", color: b.textMuted, border: `1px solid ${b.border}`, borderRadius: 999, padding: "5px 14px", marginBottom: 32, lineHeight: 1.35, whiteSpace: "normal", maxWidth: "100%" },
   pillDot: { width: 6, height: 6, borderRadius: "50%", background: b.orange, display: "inline-block" },
   heroTitle: { fontSize: "clamp(52px, 9vw, 96px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.03em", color: b.green, marginBottom: 24 },
   heroItalic: { fontStyle: "italic", color: b.orange },

@@ -16,9 +16,17 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Pearl Labs",
   description: "Pearl Labs Uganda",
-  icons: {
-    icon: "/logo.jpg",
-  },
+  icons: [
+    {
+      rel: "icon",
+      url: "/logo.jpg",
+      type: "image/jpeg",
+    },
+    {
+      rel: "apple-touch-icon",
+      url: "/logo.jpg",
+    },
+  ],
 };
 
 export default function RootLayout({
