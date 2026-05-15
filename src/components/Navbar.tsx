@@ -35,7 +35,7 @@ export default function Navbar() {
     >
       <Link href="#home" className="flex items-center gap-2.5 no-underline py-4">
         <Image
-          src="/logo.jpg"
+          src="/icon.png"
           alt="Pearl AI Labs"
           width={32}
           height={32}

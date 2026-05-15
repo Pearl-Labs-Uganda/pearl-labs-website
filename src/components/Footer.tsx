@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="bg-green text-white/50 px-[5.5vw] max-sm:px-5 py-9 flex items-center justify-between flex-wrap gap-4">
       <Link href="#home" className="flex items-center gap-2.5 no-underline">
         <Image
-          src="/logo.jpg"
+          src="/icon.png"
           alt="Pearl AI Labs"
           width={28}
           height={28}
