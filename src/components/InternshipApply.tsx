@@ -4,12 +4,15 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
-const GREEN      = "#1C3A2F";
-const ORANGE     = "#C4621A";
-const CREAM      = "#F0EDE8";
-const TEXT_MUTED = "#6B6B5E";
-const TEXT_LIGHT = "#9B9B8E";
-const BORDER     = "rgba(28,58,47,0.12)";
+const PRIMARY      = "#002D5B";
+const PRIMARY_LIGHT = "#003F80";
+const ACCENT       = "#EF8633";
+const ACCENT_MID   = "#d4732a";
+const BG           = "#F4FAFF";
+const BG_SURFACE   = "#FFFFFF";
+const TEXT_PRIMARY = "#111D23";
+const TEXT_SECONDARY = "#4C616C";
+const BORDER       = "rgba(0,45,91,0.12)";
 
 const MODULES = [
   "Module 01 — Data Science & Artificial Intelligence",
@@ -160,9 +163,9 @@ export default function InternshipApply() {
     padding: "13px 16px",
     fontSize: 14,
     fontFamily: "inherit",
-    color: GREEN,
-    background: focused === name ? "#fff" : CREAM,
-    border: `1.5px solid ${errors[name as keyof FormState] ? "#C0392B" : focused === name ? ORANGE : BORDER}`,
+    color: PRIMARY,
+    background: focused === name ? "#fff" : BG,
+    border: `1.5px solid ${errors[name as keyof FormState] ? "#C0392B" : focused === name ? ACCENT : BORDER}`,
     borderRadius: 8,
     outline: "none",
     transition: "border-color 0.2s, background 0.2s",
@@ -176,7 +179,7 @@ export default function InternshipApply() {
     fontWeight: 600,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     marginBottom: 7,
   };
 
@@ -197,7 +200,7 @@ export default function InternshipApply() {
             Your internship application has been submitted successfully.
             Our team will review it and reach out using your provided contact details.
             For urgent questions, email us at{" "}
-            <a href="mailto:pearllabsug@gmail.com" style={{ color: ORANGE }}>
+            <a href="mailto:pearllabsug@gmail.com" style={{ color: ACCENT }}>
               pearllabsug@gmail.com
             </a>.
           </p>
@@ -404,7 +407,7 @@ export default function InternshipApply() {
               {errors.motivation
                 ? <p style={errorStyle}>{errors.motivation}</p>
                 : <span />}
-              <span style={{ fontSize: 11, color: TEXT_LIGHT }}>
+              <span style={{ fontSize: 11, color: TEXT_SECONDARY }}>
                 {form.motivation.length} chars
               </span>
             </div>
@@ -426,7 +429,7 @@ export default function InternshipApply() {
           <div style={{ marginTop: 20 }}>
             <label style={labelStyle}>
               LinkedIn / GitHub / Portfolio{" "}
-              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: TEXT_LIGHT }}>
+              <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: TEXT_SECONDARY }}>
                 — optional
               </span>
             </label>
@@ -443,7 +446,7 @@ export default function InternshipApply() {
           {/* Deadline notice */}
           <div style={s.deadlineBanner}>
             ⏰ <strong>Application deadline: 28th May 2026.</strong> Submit early — slots are limited.
-            Questions? Email <a href="mailto:pearllabsug@gmail.com" style={{ color: ORANGE }}>pearllabsug@gmail.com</a>
+            Questions? Email <a href="mailto:pearllabsug@gmail.com" style={{ color: ACCENT }}>pearllabsug@gmail.com</a>
           </div>
 
           {status === "error" && (
@@ -486,8 +489,8 @@ export default function InternshipApply() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     fontFamily: "'Inter', system-ui, sans-serif",
-    background: CREAM,
-    color: GREEN,
+    background: BG,
+    color: PRIMARY,
     minHeight: "100vh",
   },
 
@@ -502,7 +505,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   navBack: {
     fontSize: 13,
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     textDecoration: "none",
     fontWeight: 500,
   },
@@ -513,7 +516,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     border: `1px solid ${BORDER}`,
     borderRadius: 999,
     padding: "5px 14px",
@@ -522,7 +525,7 @@ const s: Record<string, React.CSSProperties> = {
     width: 6,
     height: 6,
     borderRadius: "50%",
-    background: ORANGE,
+    background: ACCENT,
     display: "inline-block",
   },
 
@@ -536,7 +539,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     letterSpacing: "0.15em",
     textTransform: "uppercase",
-    color: ORANGE,
+    color: ACCENT,
     marginBottom: 14,
     fontWeight: 600,
   },
@@ -545,17 +548,17 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     lineHeight: 1.0,
     letterSpacing: "-0.03em",
-    color: GREEN,
+    color: PRIMARY,
     marginBottom: 20,
   },
   heroItalic: {
     fontStyle: "italic",
-    color: ORANGE,
+    color: ACCENT,
   },
   heroSub: {
     fontSize: 15,
     lineHeight: 1.75,
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     maxWidth: 520,
     marginBottom: 40,
   },
@@ -568,7 +571,7 @@ const s: Record<string, React.CSSProperties> = {
   statVal: {
     fontSize: 28,
     fontWeight: 800,
-    color: ORANGE,
+    color: ACCENT,
     lineHeight: 1,
     letterSpacing: "-0.02em",
   },
@@ -576,7 +579,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     letterSpacing: "0.12em",
     textTransform: "uppercase" as const,
-    color: TEXT_LIGHT,
+    color: TEXT_SECONDARY,
   },
 
   // Form
@@ -590,19 +593,19 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 16,
     border: `1px solid ${BORDER}`,
     padding: "40px 40px",
-    boxShadow: "0 4px 40px rgba(28,58,47,0.06)",
+    boxShadow: "0 4px 40px rgba(0,45,91,0.06)",
   },
   formHeader: { marginBottom: 4 },
   formTitle: {
     fontSize: 22,
     fontWeight: 800,
     letterSpacing: "-0.02em",
-    color: GREEN,
+    color: PRIMARY,
     marginBottom: 6,
   },
   formSub: {
     fontSize: 13,
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     lineHeight: 1.6,
   },
   sectionLabel: {
@@ -610,7 +613,7 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.14em",
     textTransform: "uppercase" as const,
-    color: ORANGE,
+    color: ACCENT,
     marginBottom: 18,
   },
   divider: {
@@ -635,7 +638,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     border: `1px solid ${BORDER}`,
     background: "#fff",
-    color: ORANGE,
+    color: ACCENT,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -650,11 +653,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   attachmentHint: {
     fontSize: 11,
-    color: TEXT_LIGHT,
+    color: TEXT_SECONDARY,
   },
   attachmentName: {
     fontSize: 12,
-    color: GREEN,
+    color: PRIMARY,
     maxWidth: "80%",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -663,7 +666,7 @@ const s: Record<string, React.CSSProperties> = {
   removeAttachmentBtn: {
     border: `1px solid ${BORDER}`,
     background: "#fff",
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     fontSize: 11,
     borderRadius: 999,
     padding: "5px 10px",
@@ -674,7 +677,7 @@ const s: Record<string, React.CSSProperties> = {
   submitBtn: {
     width: "100%",
     padding: "16px",
-    background: ORANGE,
+    background: ACCENT,
     color: "#fff",
     fontSize: 15,
     fontWeight: 700,
@@ -685,7 +688,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   disclaimer: {
     fontSize: 11,
-    color: TEXT_LIGHT,
+    color: TEXT_SECONDARY,
     lineHeight: 1.7,
     textAlign: "center" as const,
     marginTop: 16,
@@ -701,11 +704,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   deadlineBanner: {
     background: "#FFF8F0",
-    border: `1px solid ${ORANGE}33`,
+    border: `1px solid ${ACCENT}33`,
     borderRadius: 8,
     padding: "13px 16px",
     fontSize: 13,
-    color: GREEN,
+    color: PRIMARY,
     lineHeight: 1.7,
     marginTop: 24,
   },
@@ -721,7 +724,7 @@ const s: Record<string, React.CSSProperties> = {
     width: 64,
     height: 64,
     borderRadius: "50%",
-    background: GREEN,
+    background: PRIMARY,
     color: "#fff",
     fontSize: 28,
     fontWeight: 700,
@@ -734,20 +737,20 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 36,
     fontWeight: 800,
     letterSpacing: "-0.03em",
-    color: GREEN,
+    color: PRIMARY,
     marginBottom: 16,
   },
   successText: {
     fontSize: 15,
     lineHeight: 1.75,
-    color: TEXT_MUTED,
+    color: TEXT_SECONDARY,
     marginBottom: 36,
   },
   backLink: {
     display: "inline-block",
     fontSize: 14,
     fontWeight: 600,
-    color: ORANGE,
+    color: ACCENT,
     textDecoration: "none",
   },
 
@@ -759,6 +762,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     letterSpacing: "0.1em",
     textTransform: "uppercase" as const,
-    color: TEXT_LIGHT,
+    color: TEXT_SECONDARY,
   },
 };

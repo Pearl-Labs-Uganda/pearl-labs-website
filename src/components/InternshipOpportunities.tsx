@@ -47,12 +47,13 @@ const capstoneObjectives = [
   "Practice project planning, execution, and presentation",
 ];
 
+// ── Brand tokens (Pearl Labs) ─────────────────────────────────
 const b = {
-  cream: "#F0EDE8", creamDark: "#E8E3DC",
-  green: "#1C3A2F", greenLight: "#2A5242",
-  orange: "#C4621A", orangeHover: "#D4763A",
-  textPrimary: "#1C3A2F", textMuted: "#6B6B5E",
-  textLight: "#9B9B8E", border: "rgba(28,58,47,0.12)",
+  cream: "#F4FAFF", creamDark: "#E3F0F8",
+  green: "#002D5B", greenLight: "#003F80",
+  orange: "#EF8633", orangeHover: "#d4732a",
+  textPrimary: "#111D23", textMuted: "#4C616C",
+  textLight: "#4C616C", border: "rgba(0,45,91,0.12)",
 };
 
 export default function InternshipOpportunities() {
@@ -231,12 +232,12 @@ const s: Record<string, React.CSSProperties> = {
   capstoneWrap: { background: b.green, padding: "80px 32px" },
   capstoneInner: { maxWidth: 960, margin: "0 auto" },
   capstoneEyebrow: { fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: b.orange, marginBottom: 20, fontWeight: 600 },
-  capstoneTitle: { fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 800, letterSpacing: "-0.03em", color: "#F0EDE8", marginBottom: 20, lineHeight: 1.0 },
-  capstoneDesc: { fontSize: 15, lineHeight: 1.8, color: "rgba(240,237,232,0.5)", maxWidth: 580, marginBottom: 56 },
-  objGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 32, borderTop: "1px solid rgba(240,237,232,0.1)", paddingTop: 48 },
+  capstoneTitle: { fontSize: "clamp(40px, 7vw, 80px)", fontWeight: 800, letterSpacing: "-0.03em", color: b.cream, marginBottom: 20, lineHeight: 1.0 },
+  capstoneDesc: { fontSize: 15, lineHeight: 1.8, color: "rgba(244,250,255,0.5)", maxWidth: 580, marginBottom: 56 },
+  objGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 32, borderTop: "1px solid rgba(244,250,255,0.1)", paddingTop: 48 },
   objItem: { display: "flex", flexDirection: "column", gap: 10 },
   objNum: { fontSize: 30, fontWeight: 800, color: b.orange, opacity: 0.65, lineHeight: 1, letterSpacing: "-0.02em" },
-  objText: { fontSize: 13, lineHeight: 1.7, color: "rgba(240,237,232,0.6)" },
+  objText: { fontSize: 13, lineHeight: 1.7, color: "rgba(244,250,255,0.6)" },
   ctaSection: { maxWidth: 700, margin: "0 auto", padding: "96px 32px 120px", textAlign: "center" },
   ctaTitle: { fontSize: "clamp(36px, 6vw, 64px)", fontWeight: 800, letterSpacing: "-0.03em", color: b.green, marginBottom: 16, lineHeight: 1.05 },
   ctaSub: { fontSize: 15, lineHeight: 1.75, color: b.textMuted, marginBottom: 40 },
