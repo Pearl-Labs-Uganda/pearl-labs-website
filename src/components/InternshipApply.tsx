@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-
-const PEARL_LABS_EMAIL = "pearllabsug@gmail.com";
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
 const GREEN      = "#1C3A2F";
@@ -41,12 +39,23 @@ const INITIAL: FormState = {
 };
 
 type Status = "idle" | "sending" | "sent" | "error";
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+];
 
 export default function InternshipApply() {
   const [form,    setForm]    = useState<FormState>(INITIAL);
   const [errors,  setErrors]  = useState<Partial<FormState>>({});
   const [status,  setStatus]  = useState<Status>("idle");
+  const [submitError, setSubmitError] = useState<string>("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string>("");
   const [focused, setFocused] = useState<string | null>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   // ── Validation ──────────────────────────────────────────────
   const validate = (): Partial<FormState> => {
@@ -70,29 +79,77 @@ export default function InternshipApply() {
       if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
     };
 
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setAttachmentError("");
+
+    if (!file) {
+      setAttachment(null);
+      return;
+    }
+
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+      setAttachment(null);
+      setAttachmentError("Only PDF, DOC, DOCX, and TXT files are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setAttachment(null);
+      setAttachmentError("Attachment must be smaller than 5MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setAttachment(file);
+  };
+
+  const clearAttachment = () => {
+    setAttachment(null);
+    setAttachmentError("");
+    if (attachmentInputRef.current) {
+      attachmentInputRef.current.value = "";
+    }
+  };
+
   // ── Submit — sends directly through server API ───────────────
   const handleSubmit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
+    if (attachmentError) {
+      setStatus("error");
+      setSubmitError(attachmentError);
+      return;
+    }
 
     setStatus("sending");
+    setSubmitError("");
 
     try {
+      const payload = new FormData();
+      Object.entries(form).forEach(([key, value]) => payload.append(key, value));
+      if (attachment) payload.append("attachment", attachment);
+
       const response = await fetch("/api/internship-apply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
+        body: payload,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit application");
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || "Failed to submit application");
       }
 
       setStatus("sent");
       setForm(INITIAL);
-    } catch {
+      clearAttachment();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to submit application";
+      setSubmitError(message);
       setStatus("error");
     }
   };
@@ -315,14 +372,34 @@ export default function InternshipApply() {
           <p style={s.sectionLabel}>Motivation</p>
           <div>
             <label style={labelStyle}>Why do you want to join Pearl AI Labs?</label>
+            <div style={s.motivationWrap}>
             <textarea
-              style={fieldStyle("motivation", { minHeight: 140, resize: "vertical", lineHeight: "1.7" })}
+              style={fieldStyle("motivation", { minHeight: 140, resize: "vertical", lineHeight: "1.7", paddingRight: 56 })}
               value={form.motivation}
               onChange={change("motivation")}
               onFocus={() => setFocused("motivation")}
               onBlur={() => setFocused(null)}
               placeholder="Tell us about your interest in AI, embedded systems, or tech in Uganda. What do you hope to build or learn?"
             />
+              <button
+                type="button"
+                onClick={() => attachmentInputRef.current?.click()}
+                style={s.attachBtn}
+                aria-label="Attach supporting document"
+                title="Attach supporting document"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05L12.25 20.24a5.5 5.5 0 0 1-7.78-7.78l9.2-9.19a3.5 3.5 0 1 1 4.95 4.95l-9.2 9.2a1.5 1.5 0 0 1-2.12-2.13l8.49-8.48" />
+                </svg>
+              </button>
+              <input
+                ref={attachmentInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleAttachmentSelect}
+                style={{ display: "none" }}
+              />
+            </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
               {errors.motivation
                 ? <p style={errorStyle}>{errors.motivation}</p>
@@ -331,6 +408,19 @@ export default function InternshipApply() {
                 {form.motivation.length} chars
               </span>
             </div>
+            <div style={s.attachmentRow}>
+              {attachment ? (
+                <>
+                  <span style={s.attachmentName}>Attached: {attachment.name}</span>
+                  <button type="button" onClick={clearAttachment} style={s.removeAttachmentBtn}>
+                    Remove
+                  </button>
+                </>
+              ) : (
+                <span style={s.attachmentHint}>Optional: add supporting document (PDF, DOC, DOCX, TXT, max 5MB).</span>
+              )}
+            </div>
+            {attachmentError && <p style={errorStyle}>{attachmentError}</p>}
           </div>
 
           <div style={{ marginTop: 20 }}>
@@ -358,7 +448,7 @@ export default function InternshipApply() {
 
           {status === "error" && (
             <div style={s.errorBanner}>
-              ⚠ We could not submit your application right now. Please try again, or email us at{" "}
+              ⚠ {submitError || "We could not submit your application right now."} Please try again, or email us at{" "}
               <a href="mailto:pearllabsug@gmail.com" style={{ color: "#C0392B", fontWeight: 600 }}>
                 pearllabsug@gmail.com
               </a>.
@@ -532,6 +622,52 @@ const s: Record<string, React.CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 16,
+  },
+  motivationWrap: {
+    position: "relative" as const,
+  },
+  attachBtn: {
+    position: "absolute" as const,
+    right: 12,
+    top: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    border: `1px solid ${BORDER}`,
+    background: "#fff",
+    color: ORANGE,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+  },
+  attachmentRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    gap: 10,
+  },
+  attachmentHint: {
+    fontSize: 11,
+    color: TEXT_LIGHT,
+  },
+  attachmentName: {
+    fontSize: 12,
+    color: GREEN,
+    maxWidth: "80%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
+  },
+  removeAttachmentBtn: {
+    border: `1px solid ${BORDER}`,
+    background: "#fff",
+    color: TEXT_MUTED,
+    fontSize: 11,
+    borderRadius: 999,
+    padding: "5px 10px",
+    cursor: "pointer",
   },
 
   // Submit
