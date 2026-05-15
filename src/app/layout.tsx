@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import "./globals.css";
+import GoogleAnalytics from "../components/GoogleAnalytics";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -28,6 +29,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${fraunces.variable} ${dmSans.variable} antialiased`}
       >
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
