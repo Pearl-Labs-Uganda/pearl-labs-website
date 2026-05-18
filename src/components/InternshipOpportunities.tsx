@@ -82,7 +82,7 @@ export default function InternshipOpportunities() {
 
         <div style={s.heroCtas}>
           {/* ✅ NOW LINKS TO THE APPLY PAGE */}
-          <Link href="/internship/apply" style={s.btnSolid}>
+          <Link href="https://forms.gle/zWoYQ161XZ35WUDUA" target="_blank" rel="noopener noreferrer" style={s.btnSolid}>
             Apply Now →
           </Link>
           <a href="#structure" style={s.btnOutline}>
@@ -188,7 +188,7 @@ export default function InternshipOpportunities() {
           at ICT Hub Nakawa. Email <strong>pearllabsug@gmail.com</strong> with any questions.
         </p>
         {/* ✅ NOW LINKS TO THE APPLY PAGE */}
-        <Link href="/internship/apply" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
+        <Link href="https://forms.gle/zWoYQ161XZ35WUDUA" target="_blank" rel="noopener noreferrer" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
           Apply Now →
         </Link>
       </section>
