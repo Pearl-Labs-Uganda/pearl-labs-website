@@ -19,31 +19,51 @@ export default function ParticleWeb() {
 
     function setupCanvas() {
       const rect = c.getBoundingClientRect();
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
       Wcss = Math.max(1, rect.width);
       Hcss = Math.max(1, rect.height);
+      const isMobile = Wcss < 640;
+      const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Lower DPR on mobile for performance
+      dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1) : Math.min(window.devicePixelRatio || 1, 2);
       c.style.width = `${Wcss}px`;
       c.style.height = `${Hcss}px`;
       c.width = Math.round(Wcss * dpr);
       c.height = Math.round(Hcss * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // If user prefers reduced motion, set very low particle count
+      if (prefersReduced) {
+        MAX_DIST = Math.max(40, Math.min(Wcss, Hcss) * 0.12);
+      }
     }
 
     function initParticles() {
-      // density per css pixel^2
-      const density = 0.00008; // tuned for balanced density across sizes
-      const targetN = Math.round(Math.max(25, Math.min(140, Wcss * Hcss * density)));
-      MAX_DIST = Math.max(70, Math.min(Wcss, Hcss) * 0.18);
-      particles = Array.from({ length: targetN }, () => ({
+      const isMobile = Wcss < 640;
+      const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // density per css pixel^2, lower on mobile
+      const density = isMobile ? 0.000045 : 0.00008; // tuned for balanced density across sizes
+      const targetN = Math.round(Math.max(12, Math.min(160, Wcss * Hcss * density)));
+      MAX_DIST = isMobile ? Math.max(50, Math.min(Wcss, Hcss) * 0.12) : Math.max(70, Math.min(Wcss, Hcss) * 0.18);
+      // if user prefers reduced motion, keep very small, static set
+      const finalN = prefersReduced ? Math.min(20, targetN) : targetN;
+      const speedMul = isMobile ? 0.35 : 0.6;
+      particles = Array.from({ length: finalN }, () => ({
         x: Math.random() * Wcss,
         y: Math.random() * Hcss,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        r: Math.random() * 2 + 1.6,
+        vx: (Math.random() - 0.5) * speedMul,
+        vy: (Math.random() - 0.5) * speedMul,
+        r: Math.random() * 2 + 1.4,
       }));
     }
 
+    let frame = 0;
     function draw() {
+      frame += 1;
+      const isMobile = Wcss < 640;
+      // throttle frames on mobile for performance
+      if (isMobile && frame % 2 === 0) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, Wcss, Hcss);
 
       // move
@@ -78,15 +98,15 @@ export default function ParticleWeb() {
 
       // particles
       particles.forEach(p => {
-        // halo
+        // halo (soft, low-opacity orange)
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r + 3.2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,96,28,0.14)';
+        ctx.arc(p.x, p.y, Math.max(1.8, p.r + 1.2), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,96,28,0.12)';
         ctx.fill();
-        // core
+        // core (smaller, solid orange)
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,245,235,0.95)';
+        ctx.arc(p.x, p.y, Math.max(0.9, p.r * 0.75), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,96,28,1)';
         ctx.fill();
       });
 
