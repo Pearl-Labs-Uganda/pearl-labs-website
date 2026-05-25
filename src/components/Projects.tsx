@@ -5,17 +5,32 @@ import { useEffect, useRef } from "react";
 const projects = [
   {
     icon: "🧠",
-    tag: "Foundational Research",
-    title: "Institutional Grade Foundational Model Research",
+    tag: "Foundational AI",
+    title: "AIHub",
+    subtitle: "AI Platform",
     description:
-      "Developing and studying large-scale foundational models built for institutional deployment — prioritising reliability, interpretability, and alignment with the specific requirements of sovereign and enterprise-grade systems in emerging economies.",
+      "A unified platform giving researchers, developers, and businesses in Uganda access to state-of-the-art AI models and tools. AIHub democratizes access to artificial intelligence across East Africa.",
+    badge: "LIVE",
+    link: "https://apps.pearllabs.ug",
+  },
+  {
+    icon: "🎙️",
+    tag: "Foundational AI",
+    title: "Minuteman",
+    subtitle: "Speech Intelligence",
+    description:
+      "A free, high-accuracy speech-to-text engine built for African languages and accents. Minuteman enables seamless voice transcription for individuals and institutions across Uganda.",
+    badge: "LIVE",
+    link: "https://minuteman.pearllabs.ug",
   },
   {
     icon: "🤖",
-    tag: "Embodied AI",
-    title: "Industrial Robotics & Embodied Intelligence",
+    tag: "Embodied AI & Robotics",
+    title: "Robotic Arms Research",
+    subtitle: "Embodied Intelligence",
     description:
-      "Bridging the gap between software intelligence and the physical world through industrial robotics research and novel embodied AI systems — including intelligent toys and educational robotics platforms that make machine learning tangible.",
+      "Hands-on research into robotic arm systems, focusing on training robots to perform physical tasks through machine learning. Pearl Labs is building the foundations for industrial and educational robotics in Uganda.",
+    badge: "IN RESEARCH",
   },
 ];
 
@@ -77,15 +92,35 @@ export default function Projects() {
             <div className="w-13 h-13 rounded-xl bg-orange-pale flex items-center justify-center text-2xl mb-5">
               {project.icon}
             </div>
-            <div className="text-[.68rem] font-semibold tracking-wider uppercase text-green-mid bg-green/7 px-2.5 py-0.5 rounded-full inline-block mb-3">
-              {project.tag}
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <span className="text-[.68rem] font-semibold tracking-wider uppercase text-green-mid bg-green/7 px-2.5 py-0.5 rounded-full inline-block">
+                {project.tag}
+              </span>
+              {project.badge ? (
+                <span className="text-[.65rem] font-semibold uppercase tracking-[.16em] text-white bg-green px-2.5 py-1 rounded-full">
+                  {project.badge}
+                </span>
+              ) : null}
             </div>
-            <h3 className="font-heading text-[1.25rem] font-bold text-green mb-3 leading-snug">
+            <h3 className="font-heading text-[1.25rem] font-bold text-green mb-2 leading-snug">
               {project.title}
             </h3>
-            <p className="text-[.875rem] font-light text-text-mid leading-relaxed">
+            {project.subtitle ? (
+              <p className="text-[.875rem] font-semibold text-green-mid mb-3">
+                {project.subtitle}
+              </p>
+            ) : null}
+            <p className="text-[.875rem] font-light text-text-mid leading-relaxed mb-5">
               {project.description}
             </p>
+            {project.link ? (
+              <a
+                href={project.link}
+                className="text-[.9rem] font-semibold text-green transition-colors duration-200 hover:text-orange"
+              >
+                Visit project
+              </a>
+            ) : null}
           </div>
         ))}
       </div>
