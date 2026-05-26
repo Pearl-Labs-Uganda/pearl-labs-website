@@ -2,28 +2,29 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Bot, MessageCircle, Zap, Link2, BookOpen, Smartphone, BarChart3, Building2, Package } from "lucide-react";
 
 const consultancyServices = [
   {
-    icon: "🤖",
+    icon: Bot,
     title: "Intelligent Agents",
     description:
       "Autonomous AI agents that handle complex workflows — from customer onboarding to supply chain decisions — built around your business logic.",
   },
   {
-    icon: "💬",
+    icon: MessageCircle,
     title: "Custom Chatbots & Assistants",
     description:
       "Conversational AI tailored to your brand voice, integrated with your knowledge base and internal systems for 24/7 intelligent support.",
   },
   {
-    icon: "⚙️",
+    icon: Zap,
     title: "Robotics Solutions",
     description:
       "End-to-end design and deployment of robotic systems for industrial automation, agriculture, and education — hardware meets intelligence.",
   },
   {
-    icon: "🔗",
+    icon: Link2,
     title: "AI System Integration",
     description:
       "Seamlessly embed AI into your existing tech stack — ERP, CRM, databases, and APIs — without rebuilding from scratch.",
@@ -32,25 +33,25 @@ const consultancyServices = [
 
 const productOfferings = [
   {
-    icon: "🎓",
+    icon: BookOpen,
     title: "AI Training Programmes",
     description:
       "Hands-on workshops and certification courses for teams — from foundational literacy to advanced ML engineering, customised per organisation.",
   },
   {
-    icon: "📱",
+    icon: Smartphone,
     title: "Software Apps & SaaS",
     description:
       "Production-ready applications and cloud platforms built on our foundational models — deploy, scale, and update without the R&D overhead.",
   },
   {
-    icon: "📊",
+    icon: BarChart3,
     title: "Intelligence Dashboards",
     description:
       "Real-time analytics and predictive insights dashboards that turn your data into decisions — no data-science team required.",
   },
   {
-    icon: "🏛️",
+    icon: Building2,
     title: "Institutional AI Licensing",
     description:
       "License our foundational models and toolkits for sovereign or enterprise deployment — full control, on-premise or private cloud.",
@@ -123,7 +124,7 @@ export default function Services() {
           {/* Header stripe */}
           <div className="bg-gradient-to-r from-orange to-orange-mid px-8 py-6">
             <div className="flex items-center gap-3 mb-1">
-              <span className="text-2xl">⚡</span>
+              <Zap className="w-6 h-6 text-white" />
               <h3 className="font-heading text-[1.35rem] font-bold text-white leading-snug">
                 Innovation Consultancy
               </h3>
@@ -138,7 +139,7 @@ export default function Services() {
             {consultancyServices.map((s) => (
               <div key={s.title} className="flex gap-4">
                 <div className="w-10 h-10 rounded-xl bg-orange-pale flex items-center justify-center text-lg shrink-0 mt-0.5">
-                  {s.icon}
+                  <s.icon className="w-5 h-5 text-orange" strokeWidth={1.5} />
                 </div>
                 <div>
                   <h4 className="font-heading text-[.98rem] font-bold text-green mb-1 leading-snug">
@@ -186,7 +187,7 @@ export default function Services() {
           {/* Header stripe */}
           <div className="bg-gradient-to-r from-green to-green-mid px-8 py-6">
             <div className="flex items-center gap-3 mb-1">
-              <span className="text-2xl">📦</span>
+              <Package className="w-5 h-5 text-orange" strokeWidth={1.5} />
               <h3 className="font-heading text-[1.35rem] font-bold text-white leading-snug">
                 Products for Corporates &amp; Institutions
               </h3>
@@ -201,7 +202,7 @@ export default function Services() {
             {productOfferings.map((s) => (
               <div key={s.title} className="flex gap-4">
                 <div className="w-10 h-10 rounded-xl bg-green/8 flex items-center justify-center text-lg shrink-0 mt-0.5">
-                  {s.icon}
+                  <s.icon className="w-5 h-5 text-green" strokeWidth={1.5} />
                 </div>
                 <div>
                   <h4 className="font-heading text-[.98rem] font-bold text-green mb-1 leading-snug">

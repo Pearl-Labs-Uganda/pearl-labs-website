@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Wand2 } from "lucide-react";
 
 interface Message {
   from: "user" | "bot";
@@ -40,7 +41,7 @@ function getBotReply(msg: string): string {
   )
     return "You can reach our team directly on WhatsApp at +256 777 965 265. We're happy to help!";
   if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey"))
-    return "Hello! 👋 Welcome to Pearl Labs. How can I help you today?";
+    return "Hello! Welcome to Pearl Labs. How can I help you today?";
   if (lower.includes("thank"))
     return "You're welcome! Let us know if there's anything else we can help with.";
   return "Thanks for your message! For detailed inquiries, please reach out on WhatsApp at +256 777 965 265 or use our contact form.";
@@ -51,7 +52,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       from: "bot",
-      text: "Hi! 👋 Welcome to Pearl Labs. How can we help you today?",
+      text: "Hi! Welcome to Pearl Labs. How can we help you today?",
     },
   ]);
   const [input, setInput] = useState("");

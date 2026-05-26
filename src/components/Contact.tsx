@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MapPin, Mail, Handshake } from "lucide-react";
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -59,20 +60,20 @@ export default function Contact() {
         <div className="flex flex-col gap-4.5">
           {[
             {
-              icon: "📍",
+              icon: MapPin,
               label: "Location",
               value: "ICT Hub, Kampala, Uganda",
             },
-            { icon: "✉️", label: "Email", value: "hello@pearlailabs.ug" },
+            { icon: Mail, label: "Email", value: "hello@pearlailabs.ug" },
             {
-              icon: "🤝",
+              icon: Handshake,
               label: "Research Partnerships",
               value: "research@pearlailabs.ug",
             },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-3.5">
               <div className="w-[42px] h-[42px] rounded-[9px] bg-green text-white flex items-center justify-center text-base shrink-0">
-                {item.icon}
+                <item.icon className="w-5 h-5" strokeWidth={1.5} />
               </div>
               <div>
                 <strong className="block text-[.72rem] font-semibold text-green uppercase tracking-wider mb-0.5">

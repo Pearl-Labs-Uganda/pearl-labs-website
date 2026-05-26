@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Brain, Mic, Bot } from "lucide-react";
 
 const projects = [
   {
-    icon: "🧠",
+    icon: Brain,
     tag: "Foundational AI",
     title: "AIHub",
     subtitle: "AI Platform",
@@ -14,7 +15,7 @@ const projects = [
     link: "https://apps.pearllabs.ug",
   },
   {
-    icon: "🎙️",
+    icon: Mic,
     tag: "Foundational AI",
     title: "Minuteman",
     subtitle: "Speech Intelligence",
@@ -24,7 +25,7 @@ const projects = [
     link: "https://minuteman.pearllabs.ug",
   },
   {
-    icon: "🤖",
+    icon: Bot,
     tag: "Embodied AI & Robotics",
     title: "Robotic Arms Research",
     subtitle: "Embodied Intelligence",
@@ -90,7 +91,7 @@ export default function Projects() {
             className="project-card reveal relative overflow-hidden bg-white border border-green/7 rounded-2xl p-9 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_54px_rgba(15,51,32,.09)]"
           >
             <div className="w-13 h-13 rounded-xl bg-orange-pale flex items-center justify-center text-2xl mb-5">
-              {project.icon}
+              <project.icon className="w-6 h-6 text-orange" strokeWidth={1.5} />
             </div>
             <div className="flex flex-wrap items-center gap-3 mb-3">
               <span className="text-[.68rem] font-semibold tracking-wider uppercase text-green-mid bg-green/7 px-2.5 py-0.5 rounded-full inline-block">
