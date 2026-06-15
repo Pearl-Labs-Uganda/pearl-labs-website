@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, MessageCircle, Zap, Link2, BookOpen, Smartphone, BarChart3, Building2, Package } from "lucide-react";
+import { Bot, MessageCircle, Zap, Link2, BookOpen, Smartphone, BarChart3, Building2, Package, Printer, Wrench, Award, Truck } from "lucide-react";
 
 const consultancyServices = [
   {
@@ -55,6 +55,33 @@ const productOfferings = [
     title: "Institutional AI Licensing",
     description:
       "License our foundational models and toolkits for sovereign or enterprise deployment — full control, on-premise or private cloud.",
+  },
+];
+
+const printingServices = [
+  {
+    icon: Printer,
+    title: "Rapid Prototyping",
+    description:
+      "Turn your designs into physical parts fast — FDM, resin, and multi-material printing available for every stage of development.",
+  },
+  {
+    icon: Wrench,
+    title: "Custom Parts & Jigs",
+    description:
+      "One-off or batch production of functional components, enclosures, and tooling jigs built to your exact specifications.",
+  },
+  {
+    icon: Award,
+    title: "Product Design Support",
+    description:
+      "Our engineering team reviews your files and advises on design-for-print optimisations before a single layer is laid.",
+  },
+  {
+    icon: Truck,
+    title: "Delivery Across Uganda",
+    description:
+      "Printed and dispatched from Kampala — shipped nationwide so you receive your parts wherever you are.",
   },
 ];
 
@@ -112,13 +139,14 @@ export default function Services() {
           Our Services
         </h2>
         <p className="font-body text-[.98rem] font-light text-text-mid max-w-[580px] leading-relaxed">
-          From bespoke AI builds to ready-to-deploy products — two pillars
-          designed to meet you wherever you are on your AI journey.
+          From bespoke AI builds to ready-to-deploy products — three pillars
+          designed to meet you wherever you are on your journey.
         </p>
       </div>
 
-      {/* Two pillars */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Three pillars */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
         {/* Innovation Consultancy */}
         <div className="reveal group relative bg-white border border-green/7 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_54px_rgba(212,112,10,.1)]">
           {/* Header stripe */}
@@ -244,6 +272,70 @@ export default function Services() {
             </div>
           </div>
         </div>
+
+        {/* 3D Printing Services */}
+        <div className="reveal group relative bg-white border border-green/7 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_54px_rgba(15,110,86,.1)]">
+          {/* Header stripe */}
+          <div className="bg-gradient-to-r from-[#0F6E56] to-[#1a9070] px-8 py-6">
+            <div className="flex items-center gap-3 mb-1">
+              <Printer className="w-5 h-5 text-white" strokeWidth={1.5} />
+              <h3 className="font-heading text-[1.35rem] font-bold text-white leading-snug">
+                3D Printing Services
+              </h3>
+            </div>
+            <p className="text-white/65 text-[.82rem] font-light leading-relaxed">
+              Professional on-demand printing for prototypes, parts &amp; products
+            </p>
+          </div>
+
+          {/* Offerings */}
+          <div className="p-8 space-y-6">
+            {printingServices.map((s) => (
+              <div key={s.title} className="flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[#0F6E56]/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <s.icon className="w-5 h-5 text-[#0F6E56]" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h4 className="font-heading text-[.98rem] font-bold text-green mb-1 leading-snug">
+                    {s.title}
+                  </h4>
+                  <p className="text-[.84rem] font-light text-text-mid leading-relaxed">
+                    {s.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            <div className="pt-4 flex flex-wrap gap-3">
+              <a
+                href="https://print.pearllabs.ug"
+                className="inline-flex items-center gap-2 bg-[#0F6E56] text-white text-[.84rem] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#0a5240] hover:-translate-y-px transition-all no-underline shadow-[0_4px_16px_rgba(15,110,86,.22)]"
+              >
+                Order a print
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
+              <Link
+                href="#contact"
+                className="inline-flex items-center gap-2 border-2 border-[#0F6E56] text-[#0F6E56] text-[.84rem] font-semibold px-6 py-2.5 rounded-lg hover:bg-[#0F6E56] hover:text-white transition-all no-underline cursor-pointer"
+              >
+                Inquire about service
+              </Link>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Quotation modal */}
@@ -359,6 +451,12 @@ export default function Services() {
                       <option>Software Apps &amp; SaaS</option>
                       <option>Intelligence Dashboards</option>
                       <option>Institutional AI Licensing</option>
+                    </optgroup>
+                    <optgroup label="3D Printing">
+                      <option>Rapid Prototyping</option>
+                      <option>Custom Parts &amp; Jigs</option>
+                      <option>Product Design Support</option>
+                      <option>Other 3D Printing Enquiry</option>
                     </optgroup>
                     <option>Other</option>
                   </select>
