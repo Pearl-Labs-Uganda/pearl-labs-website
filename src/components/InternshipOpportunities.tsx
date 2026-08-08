@@ -3,48 +3,78 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const modules = [
+const tracks = [
   {
-    id: "M1", label: "Module 01",
-    title: "Data Science & Artificial Intelligence", duration: "15 Days",
-    topics: [
-      "Introduction to Data Science and AI", "Python Programming Basics",
-      "Introduction to Machine Learning", "Data Preprocessing",
-      "Exploratory Data Analysis", "Modeling", "Model Evaluation",
-      "Introduction to Time-Series Data", "Model Deployment",
+    id: "T1", label: "Track 01",
+    title: "AI & Coding", duration: "10 Sessions · 30 hrs",
+    blurb:
+      "Learn how computers are instructed and how modern AI — including large language models — learns, reasons and generates. Move from thinking like a programmer to building and prompting AI-powered projects.",
+    cohorts: [
+      {
+        name: "Cohort A — Explorers (9–13)",
+        competency:
+          "Designs and builds a simple AI-powered project using block-based coding (Scratch, Teachable Machine), demonstrating computational thinking and responsible use of technology.",
+      },
+      {
+        name: "Cohort B — Innovators (13–19)",
+        competency:
+          "Writes Python programs and builds a working AI-powered application — applying core machine-learning and LLM concepts, prompt engineering and responsible-AI principles.",
+      },
     ],
   },
   {
-    id: "M2", label: "Module 02",
-    title: "Embedded Systems & IoT", duration: "12 Days",
-    topics: [
-      "Introduction to Embedded Systems", "Basic Electronics Concepts",
-      "Microcontroller Setup and Programming", "Input and Output Control",
-      "Sensors and Actuators", "Introduction to IoT",
-      "Integration of Embedded Systems and AI",
+    id: "T2", label: "Track 02",
+    title: "Robotics", duration: "10 Sessions · 30 hrs",
+    blurb:
+      "Discover how sensors, actuators and code combine to make machines sense and act on the world — building and programming working robots.",
+    cohorts: [
+      {
+        name: "Cohort A — Explorers (9–13)",
+        competency:
+          "Builds and programs a simple robot that senses and responds to its environment, working safely and collaboratively.",
+      },
+      {
+        name: "Cohort B — Innovators (13–19)",
+        competency:
+          "Designs, programs and tests an autonomous robot integrating embedded systems, sensor feedback and an element of AI/mechatronics to solve a defined task.",
+      },
     ],
   },
   {
-    id: "M3", label: "Module 03",
-    title: "IT Project Management", duration: "3 Days",
-    topics: [
-      "Introduction to IT Project Management", "Understanding IT Project Lifecycles",
-      "Defining Requirements and Project Scope", "Planning and Task Breakdown",
-      "Time and Resource Management", "Team Collaboration in Tech Projects",
-      "Version Control and Code Management", "Documentation in IT Projects",
-      "Testing and Quality Assurance", "Risk Management in IT Systems",
-      "Deployment and Maintenance Basics", "Presentation and Technical Communication",
-      "Project Evaluation and Reflection",
+    id: "T3", label: "Track 03",
+    title: "Aerospace CAD & 3D Printing", duration: "10 Sessions · 30 hrs",
+    blurb:
+      "Links design thinking, computer-aided design and additive manufacturing to the aerospace and drone industries — turning ideas into 3D-printed parts and flying models.",
+    cohorts: [
+      {
+        name: "Cohort A — Explorers (9–13)",
+        competency:
+          "Designs simple 3D models, 3D-prints a part, and builds and tests a basic flying model, applying design thinking and the principles of flight.",
+      },
+      {
+        name: "Cohort B — Innovators (13–19)",
+        competency:
+          "Produces parametric CAD models, 3D-prints functional parts, and designs, builds and tests an aircraft or drone airframe, applying aerodynamics and an engineering design process.",
+      },
     ],
   },
 ];
 
-const capstoneObjectives = [
-  "Apply data science and AI techniques to a real problem",
-  "Collect or use real-world data",
-  "Build and integrate an embedded system",
-  "Demonstrate end-to-end system functionality",
-  "Practice project planning, execution, and presentation",
+const glance = [
+  { label: "Dates", value: "24th Aug – 4th Sept 2026" },
+  { label: "Schedule", value: "Monday – Friday, 9:00am – 12:00pm" },
+  { label: "Duration", value: "2 Weeks · 10 Sessions" },
+  { label: "Venue", value: "National ICT Hub, Nakawa" },
+  { label: "Ages", value: "9 – 19 (Cohort A: 9–13, Cohort B: 13–19)" },
+  { label: "Fee", value: "UGX 500,000 / learner — materials, snacks & certificate included" },
+];
+
+const programmeAims = [
+  "Spark curiosity and confidence in deep-tech fields that will shape the future — AI, automation and aerospace.",
+  "Move every learner from concept to a working, demonstrable project within two weeks.",
+  "Build transferable skills: computational thinking, problem-solving, teamwork and creativity.",
+  "Instil responsible, ethical and safe use of technology from the very start.",
+  "Give learners a portfolio artefact and a taste of a possible future study and career pathway.",
 ];
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
@@ -57,7 +87,7 @@ const b = {
 };
 
 export default function InternshipOpportunities() {
-  const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [activeTrack, setActiveTrack] = useState<string | null>(null);
 
   return (
     <div style={s.page}>
@@ -66,36 +96,36 @@ export default function InternshipOpportunities() {
       <section style={s.hero}>
         <div style={s.pill}>
           <span style={s.pillDot} />
-          ICT Hub Nakawa · Deadline 28th May
+          KateD Learning × Pearl Labs · National ICT Hub, Nakawa
         </div>
 
         <h1 style={s.heroTitle}>
-          Internship<br />
-          <em style={s.heroItalic}>Programme</em>
+          Deep Tech<br />
+          <em style={s.heroItalic}>Bootcamp</em>
         </h1>
 
         <p style={s.heroSub}>
-          Pearl Labs × componentPulse — hands-on training in Data Science & AI,
-          Embedded Systems & IoT, and IT Project Management. Located at ICT Hub
-          Nakawa, Kampala. University students encouraged to apply.
+          A two-week, hands-on intensive introducing learners aged 9–19 to three
+          frontier-technology fields — AI &amp; Coding, Robotics, and Aerospace CAD
+          &amp; 3D Printing. Each learner picks one track and builds a real,
+          showcase-ready project by the end of the programme.
         </p>
 
         <div style={s.heroCtas}>
-          {/* ✅ NOW LINKS TO THE APPLY PAGE */}
-          <Link href="https://forms.gle/zWoYQ161XZ35WUDUA" target="_blank" rel="noopener noreferrer" style={s.btnSolid}>
-            Apply Now →
+          <Link href="/apply" style={s.btnSolid}>
+            Register Now →
           </Link>
-          <a href="#structure" style={s.btnOutline}>
-            View Structure
+          <a href="#tracks" style={s.btnOutline}>
+            View Tracks
           </a>
         </div>
 
         <div style={s.statsRow}>
           {[
-            { value: "40", label: "Total Days" },
-            { value: "3",  label: "Core Modules" },
-            { value: "1",  label: "Capstone Project" },
-            { value: "UG", label: "Kampala, Uganda" },
+            { value: "3",       label: "Tracks" },
+            { value: "10",      label: "Sessions" },
+            { value: "9–19",    label: "Ages" },
+            { value: "UGX 500K", label: "Per Learner" },
           ].map((stat) => (
             <div key={stat.label} style={s.stat}>
               <div style={s.statVal}>{stat.value}</div>
@@ -107,50 +137,52 @@ export default function InternshipOpportunities() {
 
       <div style={s.rule} />
 
-      {/* ── MODULES ── */}
-      <section id="structure" style={s.section}>
-        <p style={s.eyebrow}>Program Structure</p>
-        <h2 style={s.sectionTitle}>Three Modules. One Capstone.</h2>
+      {/* ── TRACKS ── */}
+      <section id="tracks" style={s.section}>
+        <p style={s.eyebrow}>Programme Tracks</p>
+        <h2 style={s.sectionTitle}>One Track. Two Weeks. Real Skills.</h2>
         <p style={s.sectionSub}>
-          Each module builds on the last — from data fundamentals through
-          hardware integration and professional project delivery.
+          Each learner selects one deep-tech track and stays with it for the full
+          two weeks — depth over breadth. Content is levelled for two age cohorts,
+          from first principles to a working, showcase-ready project.
         </p>
 
         <div style={s.grid}>
-          {modules.map((mod, idx) => {
-            const open = activeModule === mod.id;
+          {tracks.map((track, idx) => {
+            const open = activeTrack === track.id;
             return (
               <div
-                key={mod.id}
+                key={track.id}
                 style={{
                   ...s.card,
                   borderColor: open ? b.orange : b.border,
                   background:  open ? "#FAF7F3" : b.cream,
                 }}
-                onClick={() => setActiveModule(open ? null : mod.id)}
+                onClick={() => setActiveTrack(open ? null : track.id)}
               >
                 <div style={s.cardTop}>
-                  <span style={s.cardLabel}>{mod.label}</span>
-                  <span style={s.cardDuration}>{mod.duration}</span>
+                  <span style={s.cardLabel}>{track.label}</span>
+                  <span style={s.cardDuration}>{track.duration}</span>
                 </div>
-                <h3 style={s.cardTitle}>{mod.title}</h3>
+                <h3 style={s.cardTitle}>{track.title}</h3>
+                <p style={s.cardBlurb}>{track.blurb}</p>
                 <div style={s.cardFooter}>
                   <span style={{ ...s.toggleLink, color: open ? b.orange : b.textMuted }}>
-                    {open ? "Hide topics ↑" : "View topics ↓"}
+                    {open ? "Hide cohort details ↑" : "View cohort details ↓"}
                   </span>
                   <span style={{ ...s.bigIndex, opacity: open ? 0.05 : 0.04 }}>
                     0{idx + 1}
                   </span>
                 </div>
                 {open && (
-                  <ul style={s.topicList}>
-                    {mod.topics.map((t, i) => (
-                      <li key={i} style={s.topicItem}>
-                        <span style={s.dot} />
-                        {t}
-                      </li>
+                  <div style={s.cohortList}>
+                    {track.cohorts.map((c) => (
+                      <div key={c.name} style={s.cohortItem}>
+                        <div style={s.cohortName}>{c.name}</div>
+                        <p style={s.cohortDesc}>{c.competency}</p>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             );
@@ -158,21 +190,35 @@ export default function InternshipOpportunities() {
         </div>
       </section>
 
-      {/* ── CAPSTONE ── */}
+      {/* ── PROGRAMME AT A GLANCE ── */}
+      <section style={s.section}>
+        <p style={s.eyebrow}>Logistics</p>
+        <h2 style={s.sectionTitle}>Programme at a Glance</h2>
+        <div style={s.glanceGrid}>
+          {glance.map((item) => (
+            <div key={item.label} style={s.glanceItem}>
+              <div style={s.glanceLabel}>{item.label}</div>
+              <div style={s.glanceValue}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── PROGRAMME AIMS ── */}
       <section style={s.capstoneWrap}>
         <div style={s.capstoneInner}>
-          <p style={s.capstoneEyebrow}>Capstone Project · 10 Days</p>
-          <h2 style={s.capstoneTitle}>Build Something<br />Real.</h2>
+          <p style={s.capstoneEyebrow}>Learn. Build. Innovate.</p>
+          <h2 style={s.capstoneTitle}>Why This<br />Bootcamp.</h2>
           <p style={s.capstoneDesc}>
-            A practical, team-based challenge where interns design and implement
-            a complete system integrating data science, AI, and embedded systems
-            — emphasising real-world problem solving and end-to-end execution.
+            The Pearl Labs Deep Tech Bootcamp, in partnership with KateD Learning,
+            is designed and sequenced around clear, project-based outcomes —
+            every learner leaves with a working artefact, not just notes.
           </p>
           <div style={s.objGrid}>
-            {capstoneObjectives.map((obj, i) => (
+            {programmeAims.map((aim, i) => (
               <div key={i} style={s.objItem}>
                 <div style={s.objNum}>0{i + 1}</div>
-                <p style={s.objText}>{obj}</p>
+                <p style={s.objText}>{aim}</p>
               </div>
             ))}
           </div>
@@ -182,14 +228,14 @@ export default function InternshipOpportunities() {
       {/* ── CTA ── */}
       <section style={s.ctaSection}>
         <p style={s.eyebrow}>Limited Slots Available</p>
-        <h2 style={s.ctaTitle}>Ready to Apply?</h2>
+        <h2 style={s.ctaTitle}>Ready to Register?</h2>
         <p style={s.ctaSub}>
-          Deadline is <strong>28th May 2026</strong>. Join a cohort of passionate builders
-          at ICT Hub Nakawa. Email <strong>pearllabsug@gmail.com</strong> with any questions.
+          24th August – 4th September 2026 at National ICT Hub, Nakawa.
+          UGX 500,000 per learner. Email <strong>pearllabsug@gmail.com</strong> or
+          call <strong>+256 788 868960</strong> with any questions.
         </p>
-        {/* ✅ NOW LINKS TO THE APPLY PAGE */}
-        <Link href="https://forms.gle/zWoYQ161XZ35WUDUA" target="_blank" rel="noopener noreferrer" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
-          Apply Now →
+        <Link href="/apply" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
+          Register Now →
         </Link>
       </section>
     </div>
@@ -204,7 +250,7 @@ const s: Record<string, React.CSSProperties> = {
   pillDot: { width: 6, height: 6, borderRadius: "50%", background: b.orange, display: "inline-block" },
   heroTitle: { fontSize: "clamp(52px, 9vw, 96px)", fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.03em", color: b.green, marginBottom: 24 },
   heroItalic: { fontStyle: "italic", color: b.orange },
-  heroSub: { fontSize: 16, lineHeight: 1.75, color: b.textMuted, maxWidth: 520, marginBottom: 40 },
+  heroSub: { fontSize: 16, lineHeight: 1.75, color: b.textMuted, maxWidth: 560, marginBottom: 40 },
   heroCtas: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 64, alignItems: "center" },
   btnSolid: { display: "inline-block", fontSize: 14, fontWeight: 600, color: "#fff", background: b.orange, border: "none", borderRadius: 6, padding: "13px 28px", cursor: "pointer", letterSpacing: "0.01em", textDecoration: "none" },
   btnOutline: { display: "inline-block", fontSize: 14, fontWeight: 600, color: b.green, border: `1.5px solid ${b.border}`, borderRadius: 6, padding: "13px 28px", cursor: "pointer", letterSpacing: "0.01em", textDecoration: "none", background: "transparent" },
@@ -216,19 +262,25 @@ const s: Record<string, React.CSSProperties> = {
   section: { maxWidth: 960, margin: "0 auto", padding: "72px 32px" },
   eyebrow: { fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: b.orange, marginBottom: 14, fontWeight: 600 },
   sectionTitle: { fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.02em", color: b.green, marginBottom: 12, lineHeight: 1.1 },
-  sectionSub: { fontSize: 15, lineHeight: 1.7, color: b.textMuted, maxWidth: 500, marginBottom: 48 },
+  sectionSub: { fontSize: 15, lineHeight: 1.7, color: b.textMuted, maxWidth: 560, marginBottom: 48 },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 },
   card: { border: "1.5px solid", borderRadius: 12, padding: "28px 24px", cursor: "pointer", transition: "border-color 0.2s, background 0.2s", position: "relative", overflow: "hidden" },
   cardTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
   cardLabel: { fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: b.orange, fontWeight: 600 },
   cardDuration: { fontSize: 11, color: b.textMuted, border: `1px solid ${b.border}`, borderRadius: 999, padding: "3px 10px" },
-  cardTitle: { fontSize: 18, fontWeight: 700, color: b.green, lineHeight: 1.3, marginBottom: 20 },
+  cardTitle: { fontSize: 18, fontWeight: 700, color: b.green, lineHeight: 1.3, marginBottom: 10 },
+  cardBlurb: { fontSize: 13, color: b.textMuted, lineHeight: 1.6, marginBottom: 20 },
   cardFooter: { display: "flex", justifyContent: "space-between", alignItems: "flex-end" },
   toggleLink: { fontSize: 12, fontWeight: 500, transition: "color 0.2s" },
   bigIndex: { fontSize: 64, fontWeight: 900, color: b.green, lineHeight: 1, letterSpacing: "-0.04em", userSelect: "none", transition: "opacity 0.2s" },
-  topicList: { listStyle: "none", display: "flex", flexDirection: "column", gap: 0, padding: "20px 0 0 0", borderTop: `1px solid ${b.border}`, marginTop: 20 },
-  topicItem: { display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: b.textMuted, lineHeight: 1.5, padding: "5px 0" },
-  dot: { width: 5, height: 5, borderRadius: "50%", background: b.orange, flexShrink: 0, opacity: 0.7 },
+  cohortList: { display: "flex", flexDirection: "column", gap: 14, padding: "20px 0 0 0", borderTop: `1px solid ${b.border}`, marginTop: 20 },
+  cohortItem: { display: "flex", flexDirection: "column", gap: 4 },
+  cohortName: { fontSize: 12, fontWeight: 700, color: b.green },
+  cohortDesc: { fontSize: 12.5, color: b.textMuted, lineHeight: 1.6 },
+  glanceGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 },
+  glanceItem: { padding: "20px 22px", background: "#fff", border: `1px solid ${b.border}`, borderRadius: 10 },
+  glanceLabel: { fontSize: 10.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: b.orange, marginBottom: 8 },
+  glanceValue: { fontSize: 14, color: b.green, fontWeight: 600, lineHeight: 1.5 },
   capstoneWrap: { background: b.green, padding: "80px 32px" },
   capstoneInner: { maxWidth: 960, margin: "0 auto" },
   capstoneEyebrow: { fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: b.orange, marginBottom: 20, fontWeight: 600 },

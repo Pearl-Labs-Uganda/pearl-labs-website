@@ -1,5 +1,5 @@
 import InternshipOpportunities from "@/components/InternshipOpportunities";
 
-export default function InternshipPage() {
+export default function BootcampsPage() {
   return <InternshipOpportunities />;
 }
