@@ -576,7 +576,7 @@ export default function InternshipApply() {
 
           <p style={s.paymentNote}>
             Payment of UGX 500,000 per learner confirms your child&apos;s spot.
-            Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 788 868960</strong>
+            Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
           </p>
 
           {status === "error" && (
