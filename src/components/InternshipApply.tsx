@@ -55,7 +55,6 @@ interface FormState {
   // Section 6: Consent
   agreeTerms: boolean;
   photoConsent: string;
-  signature: string;
 }
 
 const INITIAL: FormState = {
@@ -66,7 +65,7 @@ const INITIAL: FormState = {
   modules: [], hearAbout: "", hearAboutOther: "",
   pickupService: "", pickupLocation: "",
   medicalInfo: "", additionalInfo: "",
-  agreeTerms: false, photoConsent: "", signature: "",
+  agreeTerms: false, photoConsent: "",
 };
 
 type Status = "idle" | "sending" | "sent" | "error";
@@ -109,7 +108,6 @@ export default function InternshipApply() {
 
     if (!form.agreeTerms)          e.agreeTerms = "You must agree to continue";
     if (!form.photoConsent)        e.photoConsent = "Required";
-    if (!form.signature.trim())    e.signature = "Required";
 
     return e;
   };
@@ -261,7 +259,8 @@ export default function InternshipApply() {
           <em style={s.heroItalic}>Child&apos;s Spot</em>
         </h1>
         <p style={s.heroSub}>
-          Pearl Labs, in partnership with KateD Learning, is opening registration
+          Pearl AI Labs, in partnership with Lwera Electronics &amp; Semi-conductors
+          and the National ICT Innovation Hub, is opening registration
           for the Deep Tech Bootcamp — AI &amp; Coding, Robotics, and Aerospace CAD
           &amp; 3D Printing. Held at National ICT Hub, Nakawa.
         </p>
@@ -269,7 +268,7 @@ export default function InternshipApply() {
         <div style={s.statsRow}>
           {[
             { v: "UGX 500K", l: "Per Module" },
-            { v: "Mon–Fri",  l: "Schedule" },
+            { v: "Mon–Sat",  l: "Schedule" },
             { v: "Nakawa",   l: "ICT Hub" },
             { v: "9–19",     l: "Ages" },
           ].map(stat => (
@@ -574,7 +573,7 @@ export default function InternshipApply() {
             />
             <span>
               I confirm the information provided above is accurate and I agree to enrol
-              my child in the Pearl Labs Deep Tech Bootcamp. *
+              my child in the Pearl AI Labs Deep Tech Bootcamp. *
             </span>
           </label>
           {errors.agreeTerms && <p style={errorStyle}>{errors.agreeTerms}</p>}
@@ -582,22 +581,9 @@ export default function InternshipApply() {
           <div style={{ marginTop: 18 }}>
             {renderSelect(
               "photoConsent",
-              "I consent to my child being photographed / recorded during the program for promotional use by Pearl AI Labs / KateD Learning. *",
+              "I consent to my child being photographed / recorded during the program for promotional use by Pearl AI Labs / Lwera Electronics & Semi-conductors. *",
               ["Yes", "No"],
             )}
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <label style={labelStyle}>Parent/Guardian Signature (Full Name) *</label>
-            <input
-              style={fieldStyle("signature")}
-              value={form.signature}
-              onChange={change("signature")}
-              onFocus={() => setFocused("signature")}
-              onBlur={() => setFocused(null)}
-              placeholder="Type your full name to sign"
-            />
-            {errors.signature && <p style={errorStyle}>{errors.signature}</p>}
           </div>
 
           <p style={s.paymentNote}>

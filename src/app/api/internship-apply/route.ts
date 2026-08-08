@@ -32,7 +32,6 @@ interface RegistrationPayload {
   // Section 6: Consent
   agreeTerms: boolean;
   photoConsent: string;
-  signature: string;
 }
 
 const requiredFields: Array<keyof RegistrationPayload> = [
@@ -52,7 +51,6 @@ const requiredFields: Array<keyof RegistrationPayload> = [
   "hearAbout",
   "pickupService",
   "photoConsent",
-  "signature",
 ];
 
 function isValidEmail(value: string): boolean {
@@ -185,7 +183,7 @@ export async function POST(request: Request) {
     const amountText = formatUgx(computeAmountDue(reg.modules));
 
     const text = [
-      "Pearl Labs Deep Tech Bootcamp — Registration",
+      "Pearl AI Labs Deep Tech Bootcamp — Registration",
       "",
       "PARENT / GUARDIAN",
       `Name: ${reg.parentName}`,
@@ -221,11 +219,10 @@ export async function POST(request: Request) {
       "CONSENT",
       `Agreed to enrol: ${reg.agreeTerms ? "Yes" : "No"}`,
       `Photo/recording consent: ${reg.photoConsent}`,
-      `Signature: ${reg.signature}`,
     ].join("\n");
 
     const html = `
-      <h2>Pearl Labs Deep Tech Bootcamp — Registration</h2>
+      <h2>Pearl AI Labs Deep Tech Bootcamp — Registration</h2>
       <h3>Parent / Guardian</h3>
       <p><strong>Name:</strong> ${escapeHtml(reg.parentName)}</p>
       <p><strong>Relationship to Student:</strong> ${escapeHtml(reg.relationship)}</p>
@@ -255,7 +252,6 @@ export async function POST(request: Request) {
       <h3>Consent</h3>
       <p><strong>Agreed to enrol:</strong> ${reg.agreeTerms ? "Yes" : "No"}</p>
       <p><strong>Photo/recording consent:</strong> ${escapeHtml(reg.photoConsent)}</p>
-      <p><strong>Signature:</strong> ${escapeHtml(reg.signature)}</p>
     `;
 
     await transporter.sendMail({

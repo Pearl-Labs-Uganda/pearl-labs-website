@@ -62,11 +62,12 @@ const tracks = [
 
 const glance = [
   { label: "Dates", value: "24th Aug – 4th Sept 2026" },
-  { label: "Schedule", value: "Monday – Friday, 9:00am – 12:00pm" },
-  { label: "Duration", value: "2 Weeks · 10 Sessions" },
+  { label: "Schedule", value: "Monday – Saturday, 9:00am – 12:00pm" },
+  { label: "Duration", value: "2 Weeks" },
   { label: "Venue", value: "National ICT Hub, Nakawa" },
   { label: "Ages", value: "9 – 19 (Cohort A: 9–13, Cohort B: 13–19)" },
-  { label: "Fee", value: "UGX 500,000 / learner — materials, snacks & certificate included" },
+  { label: "Fee", value: "UGX 500,000/module — UGX 450,000/module for 2+ modules" },
+  { label: "Spots", value: "30 per cohort" },
 ];
 
 const programmeAims = [
@@ -96,7 +97,7 @@ export default function InternshipOpportunities() {
       <section style={s.hero}>
         <div style={s.pill}>
           <span style={s.pillDot} />
-          KateD Learning × Pearl Labs · National ICT Hub, Nakawa
+          Pearl AI Labs × Lwera Electronics · National ICT Hub, Nakawa
         </div>
 
         <h1 style={s.heroTitle}>
@@ -125,7 +126,7 @@ export default function InternshipOpportunities() {
             { value: "3",       label: "Tracks" },
             { value: "10",      label: "Sessions" },
             { value: "9–19",    label: "Ages" },
-            { value: "UGX 500K", label: "Per Learner" },
+            { value: "UGX 500K", label: "Per Module" },
           ].map((stat) => (
             <div key={stat.label} style={s.stat}>
               <div style={s.statVal}>{stat.value}</div>
@@ -140,11 +141,12 @@ export default function InternshipOpportunities() {
       {/* ── TRACKS ── */}
       <section id="tracks" style={s.section}>
         <p style={s.eyebrow}>Programme Tracks</p>
-        <h2 style={s.sectionTitle}>One Track. Two Weeks. Real Skills.</h2>
+        <h2 style={s.sectionTitle}>Choose Your Track(s). Two Weeks. Real Skills.</h2>
         <p style={s.sectionSub}>
-          Each learner selects one deep-tech track and stays with it for the full
-          two weeks — depth over breadth. Content is levelled for two age cohorts,
-          from first principles to a working, showcase-ready project.
+          Each learner can enrol in one or more deep-tech tracks — UGX 500,000
+          per module, discounted to UGX 450,000 per module when enrolling in
+          two or more. Content is levelled for two age cohorts, from first
+          principles to a working, showcase-ready project.
         </p>
 
         <div style={s.grid}>
@@ -210,9 +212,11 @@ export default function InternshipOpportunities() {
           <p style={s.capstoneEyebrow}>Learn. Build. Innovate.</p>
           <h2 style={s.capstoneTitle}>Why This<br />Bootcamp.</h2>
           <p style={s.capstoneDesc}>
-            The Pearl Labs Deep Tech Bootcamp, in partnership with KateD Learning,
-            is designed and sequenced around clear, project-based outcomes —
-            every learner leaves with a working artefact, not just notes.
+            The Pearl AI Labs Deep Tech Bootcamp, in partnership with Lwera
+            Electronics &amp; Semi-conductors and the National ICT Innovation
+            Hub, is designed and sequenced around clear, project-based
+            outcomes — every learner leaves with a working artefact, not just
+            notes.
           </p>
           <div style={s.objGrid}>
             {programmeAims.map((aim, i) => (
@@ -231,7 +235,8 @@ export default function InternshipOpportunities() {
         <h2 style={s.ctaTitle}>Ready to Register?</h2>
         <p style={s.ctaSub}>
           24th August – 4th September 2026 at National ICT Hub, Nakawa.
-          UGX 500,000 per learner. Email <strong>pearllabsug@gmail.com</strong> or
+          UGX 500,000 per module (UGX 450,000/module for 2+ modules). Email{" "}
+          <strong>pearllabsug@gmail.com</strong> or
           call <strong>+256 763 839356</strong> with any questions.
         </p>
         <Link href="/apply" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
