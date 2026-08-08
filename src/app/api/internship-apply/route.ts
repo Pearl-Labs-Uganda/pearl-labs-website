@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { computeAmountDue, formatUgx } from "@/lib/fee";
 
 interface RegistrationPayload {
   // Section 1: Parent / Guardian
@@ -19,7 +20,7 @@ interface RegistrationPayload {
   cohort: string;
   hasLaptop: string;
   // Section 3: Programme selection
-  track: string;
+  modules: string[];
   hearAbout: string;
   hearAboutOther?: string;
   // Section 4: Drop-off & pick-up
@@ -48,7 +49,6 @@ const requiredFields: Array<keyof RegistrationPayload> = [
   "classGrade",
   "cohort",
   "hasLaptop",
-  "track",
   "hearAbout",
   "pickupService",
   "photoConsent",
@@ -102,6 +102,10 @@ function validatePayload(payload: Partial<RegistrationPayload>): string | null {
     if (!payload[field] || !String(payload[field]).trim()) {
       return `${field} is required`;
     }
+  }
+
+  if (!Array.isArray(payload.modules) || payload.modules.length === 0) {
+    return "Select at least one module";
   }
 
   if (!isValidEmail(payload.email as string)) {
@@ -177,6 +181,8 @@ export async function POST(request: Request) {
     });
 
     const reg = payload as RegistrationPayload;
+    const modulesList = reg.modules.join(", ");
+    const amountText = formatUgx(computeAmountDue(reg.modules));
 
     const text = [
       "Pearl Labs Deep Tech Bootcamp — Registration",
@@ -200,7 +206,8 @@ export async function POST(request: Request) {
       `Has a laptop: ${reg.hasLaptop}`,
       "",
       "PROGRAMME SELECTION",
-      `Track: ${reg.track}`,
+      `Modules: ${modulesList}`,
+      `Amount Due: ${amountText}`,
       `How they heard about us: ${reg.hearAbout}${reg.hearAbout === "Other" ? ` (${reg.hearAboutOther})` : ""}`,
       "",
       "DROP-OFF & PICK-UP",
@@ -236,7 +243,8 @@ export async function POST(request: Request) {
       <p><strong>Cohort:</strong> ${escapeHtml(reg.cohort)}</p>
       <p><strong>Has a laptop:</strong> ${escapeHtml(reg.hasLaptop)}</p>
       <h3>Programme Selection</h3>
-      <p><strong>Track:</strong> ${escapeHtml(reg.track)}</p>
+      <p><strong>Modules:</strong> ${escapeHtml(modulesList)}</p>
+      <p><strong>Amount Due:</strong> ${escapeHtml(amountText)}</p>
       <p><strong>How they heard about us:</strong> ${escapeHtml(reg.hearAbout)}${reg.hearAbout === "Other" ? ` (${escapeHtml(reg.hearAboutOther ?? "")})` : ""}</p>
       <h3>Drop-off &amp; Pick-up</h3>
       <p><strong>Wants service:</strong> ${escapeHtml(reg.pickupService)}</p>

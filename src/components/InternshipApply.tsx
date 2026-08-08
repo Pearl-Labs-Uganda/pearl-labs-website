@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
 const GREEN      = "#002D5B";
@@ -14,12 +15,6 @@ const BORDER     = "rgba(0,45,91,0.12)";
 const COHORTS = [
   "Cohort A — Explorers (Ages 9–13)",
   "Cohort B — Innovators (Ages 13–19)",
-];
-
-const TRACKS = [
-  "AI & Coding",
-  "Robotics",
-  "Aerospace CAD & 3D Printing",
 ];
 
 const HEAR_ABOUT_OPTIONS = [
@@ -48,7 +43,7 @@ interface FormState {
   cohort: string;
   hasLaptop: string;
   // Section 3: Programme selection
-  track: string;
+  modules: string[];
   hearAbout: string;
   hearAboutOther: string;
   // Section 4: Drop-off & pick-up
@@ -68,7 +63,7 @@ const INITIAL: FormState = {
   email: "", address: "",
   studentName: "", age: "", gender: "", school: "", classGrade: "",
   cohort: "", hasLaptop: "",
-  track: "", hearAbout: "", hearAboutOther: "",
+  modules: [], hearAbout: "", hearAboutOther: "",
   pickupService: "", pickupLocation: "",
   medicalInfo: "", additionalInfo: "",
   agreeTerms: false, photoConsent: "", signature: "",
@@ -103,7 +98,7 @@ export default function InternshipApply() {
     if (!form.cohort)              e.cohort = "Required";
     if (!form.hasLaptop)           e.hasLaptop = "Required";
 
-    if (!form.track)               e.track = "Required";
+    if (form.modules.length === 0) e.modules = "Select at least one module";
     if (!form.hearAbout)           e.hearAbout = "Required";
     if (form.hearAbout === "Other" && !form.hearAboutOther.trim())
       e.hearAboutOther = "Please tell us how you heard about us";
@@ -124,6 +119,16 @@ export default function InternshipApply() {
       setForm(prev => ({ ...prev, [field]: e.target.value }));
       if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
     };
+
+  const toggleModule = (name: string) => {
+    setForm(prev => ({
+      ...prev,
+      modules: prev.modules.includes(name)
+        ? prev.modules.filter(m => m !== name)
+        : [...prev.modules, name],
+    }));
+    if (errors.modules) setErrors(prev => ({ ...prev, modules: undefined }));
+  };
 
   // ── Submit ──────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -263,7 +268,7 @@ export default function InternshipApply() {
 
         <div style={s.statsRow}>
           {[
-            { v: "UGX 500K", l: "Per Learner" },
+            { v: "UGX 500K", l: "Per Module" },
             { v: "Mon–Fri",  l: "Schedule" },
             { v: "Nakawa",   l: "ICT Hub" },
             { v: "9–19",     l: "Ages" },
@@ -454,11 +459,32 @@ export default function InternshipApply() {
           {/* Section 3: Programme selection */}
           <p style={s.sectionLabel}>3. Programme Selection</p>
           <p style={s.sectionHint}>
-            Each learner selects one track and stays with it for the full two weeks.
-            Fee: UGX 500,000 per learner (materials, snacks &amp; certificate included).
+            Select one or more modules. Fee: UGX 500,000 per module, discounted
+            to UGX 450,000 per module when enrolling in two or more.
           </p>
-          <div style={s.row2}>
-            {renderSelect("track", "Which track would you like the student to join? *", TRACKS)}
+
+          <label style={labelStyle}>Which module(s) would you like the student to join? *</label>
+          <div style={s.moduleGroup}>
+            {MODULE_NAMES.map((name) => (
+              <label key={name} style={s.moduleRow}>
+                <input
+                  type="checkbox"
+                  checked={form.modules.includes(name)}
+                  onChange={() => toggleModule(name)}
+                  style={s.checkbox}
+                />
+                <span>{name}</span>
+              </label>
+            ))}
+          </div>
+          {errors.modules && <p style={errorStyle}>{errors.modules}</p>}
+
+          <div style={s.amountBox}>
+            <span style={s.amountLabel}>Amount Due</span>
+            <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+          </div>
+
+          <div style={{ marginTop: 20 }}>
             {renderSelect("hearAbout", "How did you hear about us? *", HEAR_ABOUT_OPTIONS)}
           </div>
 
@@ -575,7 +601,8 @@ export default function InternshipApply() {
           </div>
 
           <p style={s.paymentNote}>
-            Payment of UGX 500,000 per learner confirms your child&apos;s spot.
+            Payment of UGX 500,000/module (UGX 450,000/module for 2+ modules)
+            confirms your child&apos;s spot.
             Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
           </p>
 
@@ -628,6 +655,11 @@ const s: Record<string, React.CSSProperties> = {
   row2: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 },
   checkboxRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.6, cursor: "pointer" },
   checkbox: { marginTop: 3, width: 16, height: 16, accentColor: ORANGE, flexShrink: 0, cursor: "pointer" },
+  moduleGroup: { display: "flex", flexDirection: "column", gap: 10, marginTop: 8 },
+  moduleRow: { display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: GREEN, fontWeight: 500, cursor: "pointer", padding: "12px 16px", background: CREAM, border: `1.5px solid ${BORDER}`, borderRadius: 8 },
+  amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", background: GREEN, borderRadius: 10, padding: "16px 20px", marginTop: 18 },
+  amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(244,250,255,0.7)", fontWeight: 700 },
+  amountValue: { fontSize: 20, fontWeight: 800, color: "#fff" },
   paymentNote: { fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: CREAM, borderRadius: 8, border: `1px solid ${BORDER}` },
   submitErrorText: { fontSize: 13, color: "#C0392B", marginTop: 16 },
   submitBtn: { width: "100%", marginTop: 20, padding: "15px", background: ORANGE, color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", border: "none", borderRadius: 8, textAlign: "center" },
