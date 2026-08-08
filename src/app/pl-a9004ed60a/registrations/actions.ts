@@ -5,5 +5,5 @@ import { markVerified } from "@/lib/registrations";
 
 export async function markVerifiedAction(id: number): Promise<void> {
   markVerified(id);
-  revalidatePath("/dev/registrations");
+  revalidatePath("/pl-a9004ed60a/registrations");
 }

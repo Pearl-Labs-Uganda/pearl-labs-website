@@ -40,10 +40,9 @@ function Row({
         style={{
           width: "100%",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 4,
           padding: "14px 16px",
           background: "#fff",
           border: "none",
@@ -116,17 +115,19 @@ function Section({
   emptyText: string;
 }) {
   return (
-    <section style={{ marginBottom: 40 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 800, color: GREEN, marginBottom: 14 }}>
+    <section style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, minWidth: 0 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: GREEN, marginBottom: 14 }}>
         {title} <span style={{ color: "#4C616C", fontWeight: 600 }}>({rows.length})</span>
       </h2>
-      {rows.length === 0 ? (
-        <p style={{ fontSize: 13, color: "#4C616C" }}>{emptyText}</p>
-      ) : (
-        rows.map((row) => (
-          <Row key={row.id} row={row} showVerifyButton={showVerifyButton} onMarkVerified={onMarkVerified} />
-        ))
-      )}
+      <div style={{ maxHeight: 640, overflowY: "auto", paddingRight: 2 }}>
+        {rows.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#4C616C" }}>{emptyText}</p>
+        ) : (
+          rows.map((row) => (
+            <Row key={row.id} row={row} showVerifyButton={showVerifyButton} onMarkVerified={onMarkVerified} />
+          ))
+        )}
+      </div>
     </section>
   );
 }
@@ -137,32 +138,34 @@ export default function RegistrationsDashboard({ registrations, onMarkVerified }
   const verified = registrations.filter((r) => r.transactionId && r.verified);
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 32 }}>
         Bootcamp Registrations
       </h1>
 
-      <Section
-        title="Unpaid"
-        rows={unpaid}
-        showVerifyButton={false}
-        onMarkVerified={onMarkVerified}
-        emptyText="No registrations without a transaction ID."
-      />
-      <Section
-        title="Awaiting Verification"
-        rows={awaiting}
-        showVerifyButton
-        onMarkVerified={onMarkVerified}
-        emptyText="Nothing waiting on verification."
-      />
-      <Section
-        title="Verified"
-        rows={verified}
-        showVerifyButton={false}
-        onMarkVerified={onMarkVerified}
-        emptyText="No verified registrations yet."
-      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
+        <Section
+          title="Unpaid"
+          rows={unpaid}
+          showVerifyButton={false}
+          onMarkVerified={onMarkVerified}
+          emptyText="No registrations without a transaction ID."
+        />
+        <Section
+          title="Awaiting Verification"
+          rows={awaiting}
+          showVerifyButton
+          onMarkVerified={onMarkVerified}
+          emptyText="Nothing waiting on verification."
+        />
+        <Section
+          title="Verified"
+          rows={verified}
+          showVerifyButton={false}
+          onMarkVerified={onMarkVerified}
+          emptyText="No verified registrations yet."
+        />
+      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function DevLoginPage() {
     setLoading(true);
     setError("");
 
-    const response = await fetch("/api/dev/login", {
+    const response = await fetch("/api/pl-a9004ed60a/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
@@ -26,7 +26,7 @@ export default function DevLoginPage() {
       return;
     }
 
-    router.push("/dev/registrations");
+    router.push("/pl-a9004ed60a/registrations");
     router.refresh();
   };
 
