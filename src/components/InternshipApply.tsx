@@ -46,13 +46,15 @@ interface FormState {
   modules: string[];
   hearAbout: string;
   hearAboutOther: string;
-  // Section 4: Drop-off & pick-up
+  // Section 4: Payment
+  transactionId: string;
+  // Section 5: Drop-off & pick-up
   pickupService: string;
   pickupLocation: string;
-  // Section 5: Medical
+  // Section 6: Medical
   medicalInfo: string;
   additionalInfo: string;
-  // Section 6: Consent
+  // Section 7: Consent
   agreeTerms: boolean;
   photoConsent: string;
 }
@@ -63,6 +65,7 @@ const INITIAL: FormState = {
   studentName: "", age: "", gender: "", school: "", classGrade: "",
   cohort: "", hasLaptop: "",
   modules: [], hearAbout: "", hearAboutOther: "",
+  transactionId: "",
   pickupService: "", pickupLocation: "",
   medicalInfo: "", additionalInfo: "",
   agreeTerms: false, photoConsent: "",
@@ -478,11 +481,6 @@ export default function InternshipApply() {
           </div>
           {errors.modules && <p style={errorStyle}>{errors.modules}</p>}
 
-          <div style={s.amountBox}>
-            <span style={s.amountLabel}>Amount Due</span>
-            <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
-          </div>
-
           <div style={{ marginTop: 20 }}>
             {renderSelect("hearAbout", "How did you hear about us? *", HEAR_ABOUT_OPTIONS)}
           </div>
@@ -503,8 +501,41 @@ export default function InternshipApply() {
 
           <div style={s.divider} />
 
-          {/* Section 4: Drop-off & pick-up */}
-          <p style={s.sectionLabel}>4. Drop-off &amp; Pick-up Service</p>
+          {/* Section 4: Payment */}
+          <p style={s.sectionLabel}>4. Payment</p>
+
+          <div style={s.amountBox}>
+            <span style={s.amountLabel}>Amount Due</span>
+            <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+          </div>
+
+          <p style={s.paymentInstructions}>
+            Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
+            select <strong>Pay Merchant / Pay Bill</strong>, enter code{" "}
+            <strong>07778381</strong>, enter the amount above, then confirm
+            with your MTN MoMo PIN.
+          </p>
+
+          <div style={{ marginTop: 20 }}>
+            <label style={labelStyle}>Transaction ID</label>
+            <input
+              style={fieldStyle("transactionId")}
+              value={form.transactionId}
+              onChange={change("transactionId")}
+              onFocus={() => setFocused("transactionId")}
+              onBlur={() => setFocused(null)}
+              placeholder="e.g. from your MTN MoMo confirmation SMS"
+            />
+            <p style={s.fieldHint}>
+              Don&apos;t have it yet? You can still submit — reply to our
+              confirmation email with your Transaction ID once you&apos;ve paid.
+            </p>
+          </div>
+
+          <div style={s.divider} />
+
+          {/* Section 5: Drop-off & pick-up */}
+          <p style={s.sectionLabel}>5. Drop-off &amp; Pick-up Service</p>
           <p style={s.sectionHint}>
             We offer drop-off and pick-up services for students attending the training.
           </p>
@@ -532,7 +563,7 @@ export default function InternshipApply() {
           <div style={s.divider} />
 
           {/* Section 5: Medical */}
-          <p style={s.sectionLabel}>5. Medical Information</p>
+          <p style={s.sectionLabel}>6. Medical Information</p>
           <div>
             <label style={labelStyle}>
               Does your child have any allergies, medical conditions, or special needs we should be aware of?
@@ -559,7 +590,7 @@ export default function InternshipApply() {
           <div style={s.divider} />
 
           {/* Section 6: Consent */}
-          <p style={s.sectionLabel}>6. Consent &amp; Confirmation</p>
+          <p style={s.sectionLabel}>7. Consent &amp; Confirmation</p>
 
           <label style={s.checkboxRow}>
             <input
@@ -646,6 +677,8 @@ const s: Record<string, React.CSSProperties> = {
   amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", background: GREEN, borderRadius: 10, padding: "16px 20px", marginTop: 18 },
   amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(244,250,255,0.7)", fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 800, color: "#fff" },
+  paymentInstructions: { fontSize: 13.5, color: TEXT_MUTED, lineHeight: 1.8, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
+  fieldHint: { fontSize: 11.5, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.6 },
   paymentNote: { fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: CREAM, borderRadius: 8, border: `1px solid ${BORDER}` },
   submitErrorText: { fontSize: 13, color: "#C0392B", marginTop: 16 },
   submitBtn: { width: "100%", marginTop: 20, padding: "15px", background: ORANGE, color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", border: "none", borderRadius: 8, textAlign: "center" },

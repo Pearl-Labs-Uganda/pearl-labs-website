@@ -23,13 +23,15 @@ interface RegistrationPayload {
   modules: string[];
   hearAbout: string;
   hearAboutOther?: string;
-  // Section 4: Drop-off & pick-up
+  // Section 4: Payment
+  transactionId?: string;
+  // Section 5: Drop-off & pick-up
   pickupService: string;
   pickupLocation?: string;
-  // Section 5: Medical
+  // Section 6: Medical
   medicalInfo?: string;
   additionalInfo?: string;
-  // Section 6: Consent
+  // Section 7: Consent
   agreeTerms: boolean;
   photoConsent: string;
 }
@@ -208,6 +210,9 @@ export async function POST(request: Request) {
       `Amount Due: ${amountText}`,
       `How they heard about us: ${reg.hearAbout}${reg.hearAbout === "Other" ? ` (${reg.hearAboutOther})` : ""}`,
       "",
+      "PAYMENT",
+      `Transaction ID: ${reg.transactionId?.trim() || "Not provided"}`,
+      "",
       "DROP-OFF & PICK-UP",
       `Wants drop-off/pick-up service: ${reg.pickupService}`,
       `Pick-up location: ${reg.pickupService === "Yes" ? reg.pickupLocation : "N/A"}`,
@@ -243,6 +248,8 @@ export async function POST(request: Request) {
       <p><strong>Modules:</strong> ${escapeHtml(modulesList)}</p>
       <p><strong>Amount Due:</strong> ${escapeHtml(amountText)}</p>
       <p><strong>How they heard about us:</strong> ${escapeHtml(reg.hearAbout)}${reg.hearAbout === "Other" ? ` (${escapeHtml(reg.hearAboutOther ?? "")})` : ""}</p>
+      <h3>Payment</h3>
+      <p><strong>Transaction ID:</strong> ${escapeHtml(reg.transactionId?.trim() || "Not provided")}</p>
       <h3>Drop-off &amp; Pick-up</h3>
       <p><strong>Wants service:</strong> ${escapeHtml(reg.pickupService)}</p>
       <p><strong>Pick-up location:</strong> ${escapeHtml(reg.pickupService === "Yes" ? reg.pickupLocation ?? "" : "N/A")}</p>
@@ -258,7 +265,7 @@ export async function POST(request: Request) {
       from: process.env.SMTP_FROM ?? `Pearl Labs Website <${smtpUser}>`,
       to: toEmail,
       replyTo: reg.email,
-      subject: `Bootcamp Registration - ${reg.studentName} (${reg.parentName})`,
+      subject: `${reg.transactionId?.trim() ? "[PAID] " : "[UNPAID] "}Bootcamp Registration - ${reg.studentName} (${reg.parentName})`,
       text,
       html,
     });
