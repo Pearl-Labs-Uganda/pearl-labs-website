@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
+
+const DRAFT_KEY = "pearlLabsBootcampDraft";
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
 const GREEN      = "#002D5B";
@@ -71,15 +73,45 @@ const INITIAL: FormState = {
   agreeTerms: false, photoConsent: "",
 };
 
-type Status = "idle" | "sending" | "sent" | "error";
+type Status = "idle" | "sending" | "saved" | "sent" | "error";
 type FieldErrors = Partial<Record<keyof FormState, string>>;
+
+interface Draft {
+  form: FormState;
+  registrationId: number | null;
+}
 
 export default function InternshipApply() {
   const [form, setForm] = useState<FormState>(INITIAL);
+  const [registrationId, setRegistrationId] = useState<number | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>("idle");
   const [submitError, setSubmitError] = useState<string>("");
   const [focused, setFocused] = useState<string | null>(null);
+  const loadedDraft = useRef(false);
+
+  // ── Load any saved draft on mount ────────────────────────────
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as Draft;
+        setForm({ ...INITIAL, ...draft.form });
+        setRegistrationId(draft.registrationId ?? null);
+      }
+    } catch {
+      // Ignore a corrupted or inaccessible draft — start fresh.
+    } finally {
+      loadedDraft.current = true;
+    }
+  }, []);
+
+  // ── Persist the draft on every change, once the initial load has run ──
+  useEffect(() => {
+    if (!loadedDraft.current) return;
+    const draft: Draft = { form, registrationId };
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [form, registrationId]);
 
   // ── Validation ──────────────────────────────────────────────
   const validate = (): FieldErrors => {
@@ -131,6 +163,15 @@ export default function InternshipApply() {
     if (errors.modules) setErrors(prev => ({ ...prev, modules: undefined }));
   };
 
+  const startNewRegistration = () => {
+    window.localStorage.removeItem(DRAFT_KEY);
+    setForm(INITIAL);
+    setRegistrationId(null);
+    setErrors({});
+    setStatus("idle");
+    setSubmitError("");
+  };
+
   // ── Submit ──────────────────────────────────────────────────
   const handleSubmit = async () => {
     const e = validate();
@@ -139,11 +180,13 @@ export default function InternshipApply() {
     setStatus("sending");
     setSubmitError("");
 
+    const hasTransactionId = Boolean(form.transactionId.trim());
+
     try {
       const response = await fetch("/api/internship-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, id: registrationId ?? undefined }),
       });
 
       if (!response.ok) {
@@ -153,8 +196,17 @@ export default function InternshipApply() {
         throw new Error(data?.error || "Failed to submit registration");
       }
 
-      setStatus("sent");
-      setForm(INITIAL);
+      const data = (await response.json()) as { ok: boolean; id: number };
+
+      if (hasTransactionId) {
+        window.localStorage.removeItem(DRAFT_KEY);
+        setForm(INITIAL);
+        setRegistrationId(null);
+        setStatus("sent");
+      } else {
+        setRegistrationId(data.id);
+        setStatus("saved");
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to submit registration";
@@ -291,6 +343,23 @@ export default function InternshipApply() {
             <h2 style={s.formTitle}>Registration Form</h2>
             <p style={s.formSub}>Fields marked with an asterisk (*) are required.</p>
           </div>
+
+          {registrationId !== null && status !== "sent" && (
+            <div style={s.draftBanner}>
+              <span>Your progress is saved on this device.</span>
+              <button type="button" onClick={startNewRegistration} style={s.draftBannerLink}>
+                Start a new registration
+              </button>
+            </div>
+          )}
+
+          {status === "saved" && (
+            <div style={s.savedBanner}>
+              Registration saved — once you&apos;ve paid via MTN MoMo, come back
+              to this page (your details will still be here), add your
+              Transaction ID below, and submit again to complete your spot.
+            </div>
+          )}
 
           <div style={s.divider} />
 
@@ -527,8 +596,9 @@ export default function InternshipApply() {
               placeholder="e.g. from your MTN MoMo confirmation SMS"
             />
             <p style={s.fieldHint}>
-              Don&apos;t have it yet? You can still submit — reply to our
-              confirmation email with your Transaction ID once you&apos;ve paid.
+              Don&apos;t have it yet? Leave this blank and submit — your
+              details are saved, so you can come back and add it once
+              you&apos;ve paid.
             </p>
           </div>
 
@@ -666,6 +736,9 @@ const s: Record<string, React.CSSProperties> = {
   formHeader: { marginBottom: 24 },
   formTitle: { fontSize: 24, fontWeight: 800, color: GREEN, letterSpacing: "-0.01em" },
   formSub: { fontSize: 13, color: TEXT_MUTED, marginTop: 6 },
+  draftBanner: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12.5, color: TEXT_MUTED, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", marginTop: 16 },
+  draftBannerLink: { background: "none", border: "none", color: ORANGE, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
+  savedBanner: { fontSize: 13, color: GREEN, lineHeight: 1.6, background: "#FFF6EC", border: `1px solid ${ORANGE}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
   divider: { height: 1, background: BORDER, margin: "28px 0" },
   sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: GREEN, marginBottom: 6 },
   sectionHint: { fontSize: 13, color: TEXT_MUTED, marginBottom: 18, lineHeight: 1.6 },

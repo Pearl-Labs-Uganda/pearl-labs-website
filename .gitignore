@@ -39,6 +39,9 @@ yarn-error.log*
 # local reference docs, not for version control
 /details
 
+# local sqlite database, not for version control
+/data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

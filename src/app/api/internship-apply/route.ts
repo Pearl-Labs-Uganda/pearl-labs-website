@@ -1,42 +1,13 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { computeAmountDue, formatUgx } from "@/lib/fee";
+import { formatUgx } from "@/lib/fee";
+import { saveRegistration, type RegistrationInput } from "@/lib/registrations";
 
-interface RegistrationPayload {
-  // Section 1: Parent / Guardian
-  parentName: string;
-  relationship: string;
-  profession: string;
-  phone: string;
-  altPhone?: string;
-  email: string;
-  address: string;
-  // Section 2: Student
-  studentName: string;
-  age: string;
-  gender: string;
-  school: string;
-  classGrade: string;
-  cohort: string;
-  hasLaptop: string;
-  // Section 3: Programme selection
-  modules: string[];
-  hearAbout: string;
-  hearAboutOther?: string;
-  // Section 4: Payment
-  transactionId?: string;
-  // Section 5: Drop-off & pick-up
-  pickupService: string;
-  pickupLocation?: string;
-  // Section 6: Medical
-  medicalInfo?: string;
-  additionalInfo?: string;
-  // Section 7: Consent
-  agreeTerms: boolean;
-  photoConsent: string;
+interface RegistrationPayload extends RegistrationInput {
+  id?: number;
 }
 
-const requiredFields: Array<keyof RegistrationPayload> = [
+const requiredFields: Array<keyof RegistrationInput> = [
   "parentName",
   "relationship",
   "profession",
@@ -99,7 +70,8 @@ function getMailErrorResponse(error: unknown): { error: string; status: number }
 
 function validatePayload(payload: Partial<RegistrationPayload>): string | null {
   for (const field of requiredFields) {
-    if (!payload[field] || !String(payload[field]).trim()) {
+    const value = payload[field];
+    if (!value || !String(value).trim()) {
       return `${field} is required`;
     }
   }
@@ -116,17 +88,11 @@ function validatePayload(payload: Partial<RegistrationPayload>): string | null {
     return "You must confirm the information is accurate and agree to enrol the student";
   }
 
-  if (
-    payload.pickupService === "Yes" &&
-    !(payload.pickupLocation ?? "").trim()
-  ) {
+  if (payload.pickupService === "Yes" && !(payload.pickupLocation ?? "").trim()) {
     return "Please share the pick-up location";
   }
 
-  if (
-    payload.hearAbout === "Other" &&
-    !(payload.hearAboutOther ?? "").trim()
-  ) {
+  if (payload.hearAbout === "Other" && !(payload.hearAboutOther ?? "").trim()) {
     return "Please tell us how you heard about us";
   }
 
@@ -142,6 +108,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    const reg = payload as RegistrationPayload;
+    const { row, shouldSendEmail } = saveRegistration(
+      {
+        parentName: reg.parentName,
+        relationship: reg.relationship,
+        profession: reg.profession,
+        phone: reg.phone,
+        altPhone: reg.altPhone,
+        email: reg.email,
+        address: reg.address,
+        studentName: reg.studentName,
+        age: reg.age,
+        gender: reg.gender,
+        school: reg.school,
+        classGrade: reg.classGrade,
+        cohort: reg.cohort,
+        hasLaptop: reg.hasLaptop,
+        modules: reg.modules,
+        hearAbout: reg.hearAbout,
+        hearAboutOther: reg.hearAboutOther,
+        pickupService: reg.pickupService,
+        pickupLocation: reg.pickupLocation,
+        medicalInfo: reg.medicalInfo,
+        additionalInfo: reg.additionalInfo,
+        agreeTerms: reg.agreeTerms,
+        photoConsent: reg.photoConsent,
+        transactionId: reg.transactionId,
+      },
+      reg.id,
+    );
+
+    if (!shouldSendEmail) {
+      return NextResponse.json({ ok: true, id: row.id });
+    }
+
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const toEmail = process.env.INTERNSHIP_TO_EMAIL ?? smtpUser;
@@ -151,6 +152,7 @@ export async function POST(request: Request) {
         {
           error:
             "Email server is not configured. Set SMTP_USER, SMTP_PASS, and INTERNSHIP_TO_EMAIL in your environment.",
+          id: row.id,
         },
         { status: 500 },
       );
@@ -161,6 +163,7 @@ export async function POST(request: Request) {
         {
           error:
             "INTERNSHIP_TO_EMAIL is invalid. Please provide a full email address like hello@pearllabs.ug.",
+          id: row.id,
         },
         { status: 500 },
       );
@@ -174,112 +177,106 @@ export async function POST(request: Request) {
       host: smtpHost,
       port: smtpPort,
       secure: smtpSecure,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
+      auth: { user: smtpUser, pass: smtpPass },
     });
 
-    const reg = payload as RegistrationPayload;
-    const modulesList = reg.modules.join(", ");
-    const amountText = formatUgx(computeAmountDue(reg.modules));
+    const modulesList = row.modules.join(", ");
+    const amountText = formatUgx(row.amountDue);
 
     const text = [
       "Pearl AI Labs Deep Tech Bootcamp — Registration",
       "",
       "PARENT / GUARDIAN",
-      `Name: ${reg.parentName}`,
-      `Relationship to Student: ${reg.relationship}`,
-      `Profession: ${reg.profession}`,
-      `Phone: ${reg.phone}`,
-      `Alternative Phone: ${reg.altPhone?.trim() || "Not provided"}`,
-      `Email: ${reg.email}`,
-      `Address: ${reg.address}`,
+      `Name: ${row.parentName}`,
+      `Relationship to Student: ${row.relationship}`,
+      `Profession: ${row.profession}`,
+      `Phone: ${row.phone}`,
+      `Alternative Phone: ${row.altPhone?.trim() || "Not provided"}`,
+      `Email: ${row.email}`,
+      `Address: ${row.address}`,
       "",
       "STUDENT",
-      `Name: ${reg.studentName}`,
-      `Age: ${reg.age}`,
-      `Gender: ${reg.gender}`,
-      `School: ${reg.school}`,
-      `Class / Grade: ${reg.classGrade}`,
-      `Cohort: ${reg.cohort}`,
-      `Has a laptop: ${reg.hasLaptop}`,
+      `Name: ${row.studentName}`,
+      `Age: ${row.age}`,
+      `Gender: ${row.gender}`,
+      `School: ${row.school}`,
+      `Class / Grade: ${row.classGrade}`,
+      `Cohort: ${row.cohort}`,
+      `Has a laptop: ${row.hasLaptop}`,
       "",
       "PROGRAMME SELECTION",
       `Modules: ${modulesList}`,
       `Amount Due: ${amountText}`,
-      `How they heard about us: ${reg.hearAbout}${reg.hearAbout === "Other" ? ` (${reg.hearAboutOther})` : ""}`,
+      `How they heard about us: ${row.hearAbout}${row.hearAbout === "Other" ? ` (${row.hearAboutOther})` : ""}`,
       "",
       "PAYMENT",
-      `Transaction ID: ${reg.transactionId?.trim() || "Not provided"}`,
+      `Transaction ID: ${row.transactionId ?? "Not provided"}`,
       "",
       "DROP-OFF & PICK-UP",
-      `Wants drop-off/pick-up service: ${reg.pickupService}`,
-      `Pick-up location: ${reg.pickupService === "Yes" ? reg.pickupLocation : "N/A"}`,
+      `Wants drop-off/pick-up service: ${row.pickupService}`,
+      `Pick-up location: ${row.pickupService === "Yes" ? row.pickupLocation : "N/A"}`,
       "",
       "MEDICAL / ADDITIONAL INFO",
-      `Allergies / medical conditions / special needs: ${reg.medicalInfo?.trim() || "Not provided"}`,
-      `Additional info: ${reg.additionalInfo?.trim() || "Not provided"}`,
+      `Allergies / medical conditions / special needs: ${row.medicalInfo?.trim() || "Not provided"}`,
+      `Additional info: ${row.additionalInfo?.trim() || "Not provided"}`,
       "",
       "CONSENT",
-      `Agreed to enrol: ${reg.agreeTerms ? "Yes" : "No"}`,
-      `Photo/recording consent: ${reg.photoConsent}`,
+      `Agreed to enrol: ${row.agreeTerms ? "Yes" : "No"}`,
+      `Photo/recording consent: ${row.photoConsent}`,
     ].join("\n");
 
     const html = `
       <h2>Pearl AI Labs Deep Tech Bootcamp — Registration</h2>
       <h3>Parent / Guardian</h3>
-      <p><strong>Name:</strong> ${escapeHtml(reg.parentName)}</p>
-      <p><strong>Relationship to Student:</strong> ${escapeHtml(reg.relationship)}</p>
-      <p><strong>Profession:</strong> ${escapeHtml(reg.profession)}</p>
-      <p><strong>Phone:</strong> ${escapeHtml(reg.phone)}</p>
-      <p><strong>Alternative Phone:</strong> ${escapeHtml(reg.altPhone?.trim() || "Not provided")}</p>
-      <p><strong>Email:</strong> ${escapeHtml(reg.email)}</p>
-      <p><strong>Address:</strong> ${escapeHtml(reg.address)}</p>
+      <p><strong>Name:</strong> ${escapeHtml(row.parentName)}</p>
+      <p><strong>Relationship to Student:</strong> ${escapeHtml(row.relationship)}</p>
+      <p><strong>Profession:</strong> ${escapeHtml(row.profession)}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(row.phone)}</p>
+      <p><strong>Alternative Phone:</strong> ${escapeHtml(row.altPhone?.trim() || "Not provided")}</p>
+      <p><strong>Email:</strong> ${escapeHtml(row.email)}</p>
+      <p><strong>Address:</strong> ${escapeHtml(row.address)}</p>
       <h3>Student</h3>
-      <p><strong>Name:</strong> ${escapeHtml(reg.studentName)}</p>
-      <p><strong>Age:</strong> ${escapeHtml(reg.age)}</p>
-      <p><strong>Gender:</strong> ${escapeHtml(reg.gender)}</p>
-      <p><strong>School:</strong> ${escapeHtml(reg.school)}</p>
-      <p><strong>Class / Grade:</strong> ${escapeHtml(reg.classGrade)}</p>
-      <p><strong>Cohort:</strong> ${escapeHtml(reg.cohort)}</p>
-      <p><strong>Has a laptop:</strong> ${escapeHtml(reg.hasLaptop)}</p>
+      <p><strong>Name:</strong> ${escapeHtml(row.studentName)}</p>
+      <p><strong>Age:</strong> ${escapeHtml(row.age)}</p>
+      <p><strong>Gender:</strong> ${escapeHtml(row.gender)}</p>
+      <p><strong>School:</strong> ${escapeHtml(row.school)}</p>
+      <p><strong>Class / Grade:</strong> ${escapeHtml(row.classGrade)}</p>
+      <p><strong>Cohort:</strong> ${escapeHtml(row.cohort)}</p>
+      <p><strong>Has a laptop:</strong> ${escapeHtml(row.hasLaptop)}</p>
       <h3>Programme Selection</h3>
       <p><strong>Modules:</strong> ${escapeHtml(modulesList)}</p>
       <p><strong>Amount Due:</strong> ${escapeHtml(amountText)}</p>
-      <p><strong>How they heard about us:</strong> ${escapeHtml(reg.hearAbout)}${reg.hearAbout === "Other" ? ` (${escapeHtml(reg.hearAboutOther ?? "")})` : ""}</p>
+      <p><strong>How they heard about us:</strong> ${escapeHtml(row.hearAbout)}${row.hearAbout === "Other" ? ` (${escapeHtml(row.hearAboutOther ?? "")})` : ""}</p>
       <h3>Payment</h3>
-      <p><strong>Transaction ID:</strong> ${escapeHtml(reg.transactionId?.trim() || "Not provided")}</p>
+      <p><strong>Transaction ID:</strong> ${escapeHtml(row.transactionId ?? "Not provided")}</p>
       <h3>Drop-off &amp; Pick-up</h3>
-      <p><strong>Wants service:</strong> ${escapeHtml(reg.pickupService)}</p>
-      <p><strong>Pick-up location:</strong> ${escapeHtml(reg.pickupService === "Yes" ? reg.pickupLocation ?? "" : "N/A")}</p>
+      <p><strong>Wants service:</strong> ${escapeHtml(row.pickupService)}</p>
+      <p><strong>Pick-up location:</strong> ${escapeHtml(row.pickupService === "Yes" ? row.pickupLocation ?? "" : "N/A")}</p>
       <h3>Medical / Additional Info</h3>
-      <p><strong>Allergies / medical conditions / special needs:</strong> ${escapeHtml(reg.medicalInfo?.trim() || "Not provided")}</p>
-      <p><strong>Additional info:</strong> ${escapeHtml(reg.additionalInfo?.trim() || "Not provided")}</p>
+      <p><strong>Allergies / medical conditions / special needs:</strong> ${escapeHtml(row.medicalInfo?.trim() || "Not provided")}</p>
+      <p><strong>Additional info:</strong> ${escapeHtml(row.additionalInfo?.trim() || "Not provided")}</p>
       <h3>Consent</h3>
-      <p><strong>Agreed to enrol:</strong> ${reg.agreeTerms ? "Yes" : "No"}</p>
-      <p><strong>Photo/recording consent:</strong> ${escapeHtml(reg.photoConsent)}</p>
+      <p><strong>Agreed to enrol:</strong> ${row.agreeTerms ? "Yes" : "No"}</p>
+      <p><strong>Photo/recording consent:</strong> ${escapeHtml(row.photoConsent)}</p>
     `;
 
     await transporter.sendMail({
       from: process.env.SMTP_FROM ?? `Pearl Labs Website <${smtpUser}>`,
       to: toEmail,
-      replyTo: reg.email,
-      subject: `${reg.transactionId?.trim() ? "[PAID] " : "[UNPAID] "}Bootcamp Registration - ${reg.studentName} (${reg.parentName})`,
+      replyTo: row.email,
+      subject: `Bootcamp Registration - ${row.studentName} (${row.parentName})`,
       text,
       html,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, id: row.id });
   } catch (error) {
     console.error("Failed to submit bootcamp registration:", error);
     const isProduction = process.env.NODE_ENV === "production";
     const detailed = getMailErrorResponse(error);
 
     return NextResponse.json(
-      {
-        error: isProduction ? "Could not send registration" : detailed.error,
-      },
+      { error: isProduction ? "Could not send registration" : detailed.error },
       { status: detailed.status },
     );
   }
