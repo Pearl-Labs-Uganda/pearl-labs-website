@@ -344,7 +344,7 @@ export default function InternshipApply() {
             <p style={s.formSub}>Fields marked with an asterisk (*) are required.</p>
           </div>
 
-          {registrationId !== null && status !== "sent" && (
+          {registrationId !== null && (
             <div style={s.draftBanner}>
               <span>Your progress is saved on this device.</span>
               <button type="button" onClick={startNewRegistration} style={s.draftBannerLink}>
