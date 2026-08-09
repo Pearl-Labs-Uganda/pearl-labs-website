@@ -322,7 +322,7 @@ export default function InternshipApply() {
 
         <div style={s.statsRow}>
           {[
-            { v: "UGX 500K", l: "Per Module" },
+            { v: "30",       l: "Spots" },
             { v: "Mon–Sat",  l: "Schedule" },
             { v: "Nakawa",   l: "ICT Hub" },
             { v: "9–19",     l: "Ages" },
@@ -688,8 +688,7 @@ export default function InternshipApply() {
           </div>
 
           <p style={s.paymentNote}>
-            Payment of UGX 500,000/module (UGX 450,000/module for 2+ modules)
-            confirms your child&apos;s spot.
+            Payment confirms your child&apos;s spot.
             Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
           </p>
 

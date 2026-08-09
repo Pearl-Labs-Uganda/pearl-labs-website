@@ -66,8 +66,7 @@ const glance = [
   { label: "Duration", value: "2 Weeks" },
   { label: "Venue", value: "National ICT Hub, Nakawa" },
   { label: "Ages", value: "9 – 19 (Cohort A: 9–13, Cohort B: 13–19)" },
-  { label: "Fee", value: "UGX 500,000/module — UGX 450,000/module for 2+ modules" },
-  { label: "Spots", value: "30 per cohort" },
+  { label: "Spots", value: "30 total (whole bootcamp)" },
 ];
 
 const programmeAims = [
@@ -126,7 +125,7 @@ export default function InternshipOpportunities() {
             { value: "3",       label: "Tracks" },
             { value: "10",      label: "Sessions" },
             { value: "9–19",    label: "Ages" },
-            { value: "UGX 500K", label: "Per Module" },
+            { value: "30",      label: "Spots Available" },
           ].map((stat) => (
             <div key={stat.label} style={s.stat}>
               <div style={s.statVal}>{stat.value}</div>
@@ -143,10 +142,10 @@ export default function InternshipOpportunities() {
         <p style={s.eyebrow}>Programme Tracks</p>
         <h2 style={s.sectionTitle}>Choose Your Track(s). Two Weeks. Real Skills.</h2>
         <p style={s.sectionSub}>
-          Each learner can enrol in one or more deep-tech tracks — UGX 500,000
-          per module, discounted to UGX 450,000 per module when enrolling in
-          two or more. Content is levelled for two age cohorts, from first
-          principles to a working, showcase-ready project.
+          Each learner can enrol in one or more deep-tech tracks — pricing is
+          shown as you select modules on the registration form. Content is
+          levelled for two age cohorts, from first principles to a working,
+          showcase-ready project.
         </p>
 
         <div style={s.grid}>
@@ -235,7 +234,7 @@ export default function InternshipOpportunities() {
         <h2 style={s.ctaTitle}>Ready to Register?</h2>
         <p style={s.ctaSub}>
           24th August – 4th September 2026 at National ICT Hub, Nakawa.
-          UGX 500,000 per module (UGX 450,000/module for 2+ modules). Email{" "}
+          Email{" "}
           <strong>pearllabsug@gmail.com</strong> or
           call <strong>+256 763 839356</strong> with any questions.
         </p>
