@@ -419,8 +419,8 @@ export default function InternshipApply() {
             you can see it for yourself. Walk through the space your child
             would be training in at National ICT Hub, Nakawa, and have a look
             at the equipment up close — the 3D printer and the robotics car
-            included. Bring the children along and stay as long as you like.
-            No booking, nothing to pay — just come through.
+            included. Bring the children along. No booking, nothing to pay —
+            just come through.
           </p>
           <div style={s.tourFacts}>
             <div style={s.tourFact}>
