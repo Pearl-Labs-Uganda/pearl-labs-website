@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, Check } from "lucide-react";
 import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
+import { trackEvent } from "@/lib/analytics";
 
 const MERCHANT_CODE = "07778381";
 
@@ -101,6 +102,22 @@ export default function InternshipApply() {
   const [focused, setFocused] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const loadedDraft = useRef(false);
+  const formStarted = useRef(false);
+
+  // Fires once per visit, on the first field the visitor touches — pairs with
+  // form_submitted in handleSubmit to build a start-to-finish funnel in GA4.
+  const handleFieldFocus = (field: string) => {
+    setFocused(field);
+    if (!formStarted.current) {
+      formStarted.current = true;
+      trackEvent("form_started");
+    }
+  };
+
+  // ── Track the visit — top of the visit → started → submitted funnel ──
+  useEffect(() => {
+    trackEvent("apply_view");
+  }, []);
 
   // ── Load any saved draft on mount ────────────────────────────
   useEffect(() => {
@@ -216,6 +233,7 @@ export default function InternshipApply() {
       }
 
       const data = (await response.json()) as { ok: boolean; id: number };
+      trackEvent("form_submitted", { has_payment: hasTransactionId });
 
       if (hasTransactionId) {
         window.localStorage.removeItem(DRAFT_KEY);
@@ -279,7 +297,7 @@ export default function InternshipApply() {
         style={fieldStyle(field)}
         value={form[field] as string}
         onChange={change(field)}
-        onFocus={() => setFocused(field)}
+        onFocus={() => handleFieldFocus(field)}
         onBlur={() => setFocused(null)}
       >
         <option value="">{placeholder}</option>
@@ -304,7 +322,7 @@ export default function InternshipApply() {
         type={opts.type ?? "text"}
         value={form[field] as string}
         onChange={change(field)}
-        onFocus={() => setFocused(field)}
+        onFocus={() => handleFieldFocus(field)}
         onBlur={() => setFocused(null)}
         placeholder={opts.placeholder}
       />
@@ -319,7 +337,7 @@ export default function InternshipApply() {
         style={fieldStyle(field, { minHeight: 90, resize: "vertical" })}
         value={form[field] as string}
         onChange={change(field)}
-        onFocus={() => setFocused(field)}
+        onFocus={() => handleFieldFocus(field)}
         onBlur={() => setFocused(null)}
       />
       {errors[field] && <p style={errorStyle}>{errors[field]}</p>}
