@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Copy, Check } from "lucide-react";
 import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
+
+const MERCHANT_CODE = "07778381";
 
 const DRAFT_KEY = "pearlLabsBootcampDraft";
 
@@ -88,6 +91,7 @@ export default function InternshipApply() {
   const [status, setStatus] = useState<Status>("idle");
   const [submitError, setSubmitError] = useState<string>("");
   const [focused, setFocused] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const loadedDraft = useRef(false);
 
   // ── Load any saved draft on mount ────────────────────────────
@@ -152,6 +156,13 @@ export default function InternshipApply() {
       setForm(prev => ({ ...prev, [field]: e.target.value }));
       if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
     };
+
+  const copyMerchantCode = () => {
+    navigator.clipboard.writeText(MERCHANT_CODE).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    });
+  };
 
   const toggleModule = (name: string) => {
     setForm(prev => ({
@@ -580,10 +591,27 @@ export default function InternshipApply() {
 
           <p style={s.paymentInstructions}>
             Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
-            select <strong>Pay Merchant / Pay Bill</strong>, enter code{" "}
-            <strong>07778381</strong>, enter the amount above, then confirm
-            with your MTN MoMo PIN.
+            select <strong>Pay Merchant / Pay Bill</strong>, then enter the
+            merchant code below, the amount above, and confirm with your MTN
+            MoMo PIN.
           </p>
+
+          <button
+            type="button"
+            onClick={copyMerchantCode}
+            style={s.merchantCodeBox}
+          >
+            <span style={s.merchantCodeLabel}>Merchant Code</span>
+            <span style={s.merchantCodeRight}>
+              <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
+              {codeCopied ? (
+                <Check size={18} color={ORANGE} />
+              ) : (
+                <Copy size={18} color={ORANGE} />
+              )}
+            </span>
+          </button>
+          {codeCopied && <p style={s.copiedHint}>Copied!</p>}
 
           <div style={{ marginTop: 20 }}>
             <label style={labelStyle}>Transaction ID</label>
@@ -750,6 +778,11 @@ const s: Record<string, React.CSSProperties> = {
   amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(244,250,255,0.7)", fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 800, color: "#fff" },
   paymentInstructions: { fontSize: 13.5, color: TEXT_MUTED, lineHeight: 1.8, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
+  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#FFF6EC", border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: "14px 20px", marginTop: 10, width: "100%", cursor: "pointer", font: "inherit" },
+  merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: ORANGE, fontWeight: 700 },
+  merchantCodeRight: { display: "flex", alignItems: "center", gap: 10 },
+  merchantCodeValue: { fontSize: 22, fontWeight: 800, color: GREEN, letterSpacing: "0.08em", fontFamily: "monospace" },
+  copiedHint: { fontSize: 12, color: ORANGE, fontWeight: 600, marginTop: 6, textAlign: "right" },
   fieldHint: { fontSize: 11.5, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.6 },
   paymentNote: { fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: CREAM, borderRadius: 8, border: `1px solid ${BORDER}` },
   submitErrorText: { fontSize: 13, color: "#C0392B", marginTop: 16 },
