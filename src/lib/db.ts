@@ -37,6 +37,12 @@ CREATE TABLE IF NOT EXISTS registrations (
   verified INTEGER NOT NULL DEFAULT 0,
   verified_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 `;
 
 export function getDb(): Database.Database {

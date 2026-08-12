@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RegistrationRow } from "@/lib/registrations";
+import type { EventCounts } from "@/lib/analyticsEvents";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
 
 const GREEN = "#002D5B";
@@ -11,7 +12,69 @@ const CREAM = "#F4FAFF";
 
 interface Props {
   registrations: RegistrationRow[];
+  eventCounts: EventCounts;
   onMarkVerified: (id: number) => Promise<void>;
+}
+
+function TabBar({
+  active,
+  onChange,
+}: {
+  active: "analytics" | "registrations";
+  onChange: (tab: "analytics" | "registrations") => void;
+}) {
+  const tabs: { id: "analytics" | "registrations"; label: string }[] = [
+    { id: "analytics", label: "Analytics" },
+    { id: "registrations", label: "Registrations" },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${BORDER}`, marginBottom: 24 }}>
+      {tabs.map((tab) => {
+        const isActive = tab.id === active;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            style={{
+              padding: "10px 18px",
+              fontSize: 13.5,
+              fontWeight: 700,
+              color: isActive ? GREEN : "#4C616C",
+              background: "none",
+              border: "none",
+              borderBottom: `2px solid ${isActive ? ORANGE : "transparent"}`,
+              marginBottom: -1,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function pct(part: number, whole: number): string {
+  return whole > 0 ? `${Math.round((part / whole) * 100)}%` : "—";
+}
+
+// An unqualified toLocaleString() formats using the running process's default
+// locale — different on the Node server than in the visitor's browser, which
+// produces mismatched text on the same render and trips a hydration error.
+// Pinning an explicit locale + format keeps server and client output identical.
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }
 
 function Row({
@@ -55,7 +118,7 @@ function Row({
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.parentName} · {row.phone}</span>
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.modules.join(", ")}</span>
         <span style={{ fontSize: 12.5, fontWeight: 700, color: ORANGE }}>{formatUgx(row.amountDue)}</span>
-        <span style={{ fontSize: 11, color: "#4C616C" }}>{new Date(row.createdAt).toLocaleString()}</span>
+        <span style={{ fontSize: 11, color: "#4C616C" }}>{formatDateTime(row.createdAt)}</span>
       </button>
 
       {open && (
@@ -73,7 +136,7 @@ function Row({
           <p><strong>Additional info:</strong> {row.additionalInfo || "Not provided"}</p>
           <p><strong>Photo consent:</strong> {row.photoConsent}</p>
           <p><strong>Transaction ID:</strong> {row.transactionId || "Not provided"}</p>
-          {row.verifiedAt && <p><strong>Verified at:</strong> {new Date(row.verifiedAt).toLocaleString()}</p>}
+          {row.verifiedAt && <p><strong>Verified at:</strong> {formatDateTime(row.verifiedAt)}</p>}
 
           {showVerifyButton && (
             <button
@@ -101,11 +164,20 @@ function Row({
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string | number }) {
+function StatTile({
+  label,
+  value,
+  caption,
+}: {
+  label: string;
+  value: string | number;
+  caption?: string;
+}) {
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 16px" }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: "#4C616C" }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 700, color: GREEN, marginTop: 4 }}>{value}</div>
+      {caption && <div style={{ fontSize: 11, fontWeight: 600, color: ORANGE, marginTop: 2 }}>{caption}</div>}
     </div>
   );
 }
@@ -185,7 +257,8 @@ function Section({
 // caps at 30 students total, not per cohort.
 const TOTAL_SPOTS = 30;
 
-export default function RegistrationsDashboard({ registrations, onMarkVerified }: Props) {
+export default function RegistrationsDashboard({ registrations, eventCounts, onMarkVerified }: Props) {
+  const [view, setView] = useState<"analytics" | "registrations">("analytics");
   const unpaid = registrations.filter((r) => !r.transactionId);
   const awaiting = registrations.filter((r) => r.transactionId && !r.verified);
   const verified = registrations.filter((r) => r.transactionId && r.verified);
@@ -226,59 +299,88 @@ export default function RegistrationsDashboard({ registrations, onMarkVerified }
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 32 }}>
+      <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 24 }}>
         Bootcamp Registrations
       </h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <StatTile label="Total registrations" value={registrations.length} />
-        <StatTile label="Verified" value={verified.length} />
-        <StatTile label="Conversion rate" value={`${conversionRate}%`} />
-        <StatTile label="Need a laptop provided" value={laptopProvisionCount} />
-      </div>
+      <TabBar active={view} onChange={setView} />
 
-      <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, marginBottom: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 8 }}>
-          <span style={{ color: "#4C616C", fontWeight: 600 }}>Spots reserved</span>
-          <span style={{ color: GREEN, fontWeight: 700 }}>{reservedCount} / {TOTAL_SPOTS}</span>
+      {view === "analytics" ? (
+        <>
+          {/* Earliest funnel stage — counted server-side in our own DB (see
+              src/lib/analyticsEvents.ts) so it's visible here without GA4 API
+              credentials. Excludes anyone who's opted out via ?nostats=1. */}
+          <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4C616C", marginBottom: 10 }}>
+            Apply Page Funnel
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+            <StatTile label="Visits" value={eventCounts.applyView} />
+            <StatTile
+              label="Started the form"
+              value={eventCounts.formStarted}
+              caption={`${pct(eventCounts.formStarted, eventCounts.applyView)} of visits`}
+            />
+            <StatTile
+              label="Submitted the form"
+              value={eventCounts.formSubmitted}
+              caption={`${pct(eventCounts.formSubmitted, eventCounts.formStarted)} of starts`}
+            />
+          </div>
+
+          <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4C616C", marginBottom: 10 }}>
+            Registration Stats
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+            <StatTile label="Total registrations" value={registrations.length} />
+            <StatTile label="Verified" value={verified.length} />
+            <StatTile label="Conversion rate" value={`${conversionRate}%`} />
+            <StatTile label="Need a laptop provided" value={laptopProvisionCount} />
+          </div>
+
+          <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 8 }}>
+              <span style={{ color: "#4C616C", fontWeight: 600 }}>Spots reserved</span>
+              <span style={{ color: GREEN, fontWeight: 700 }}>{reservedCount} / {TOTAL_SPOTS}</span>
+            </div>
+            <div style={{ height: 10, background: CREAM, borderRadius: 5 }}>
+              <div style={{ height: "100%", width: `${capacityPct}%`, background: ORANGE, borderRadius: "0 5px 5px 0" }} />
+            </div>
+            <p style={{ fontSize: 11.5, color: "#4C616C", marginTop: 8 }}>
+              {verified.length} verified · {awaiting.length} awaiting confirmation
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+            <BarBreakdown title="Module demand" items={moduleDemand} />
+            <BarBreakdown title="Cohort split" items={cohortSplit} />
+            <BarBreakdown title="How they heard about us" items={channelBreakdown} />
+          </div>
+        </>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
+          <Section
+            title="Unpaid"
+            rows={unpaid}
+            showVerifyButton={false}
+            onMarkVerified={onMarkVerified}
+            emptyText="No registrations without a transaction ID."
+          />
+          <Section
+            title="Awaiting Verification"
+            rows={awaiting}
+            showVerifyButton
+            onMarkVerified={onMarkVerified}
+            emptyText="Nothing waiting on verification."
+          />
+          <Section
+            title="Verified"
+            rows={verified}
+            showVerifyButton={false}
+            onMarkVerified={onMarkVerified}
+            emptyText="No verified registrations yet."
+          />
         </div>
-        <div style={{ height: 10, background: CREAM, borderRadius: 5 }}>
-          <div style={{ height: "100%", width: `${capacityPct}%`, background: ORANGE, borderRadius: "0 5px 5px 0" }} />
-        </div>
-        <p style={{ fontSize: 11.5, color: "#4C616C", marginTop: 8 }}>
-          {verified.length} verified · {awaiting.length} awaiting confirmation
-        </p>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 32 }}>
-        <BarBreakdown title="Module demand" items={moduleDemand} />
-        <BarBreakdown title="Cohort split" items={cohortSplit} />
-        <BarBreakdown title="How they heard about us" items={channelBreakdown} />
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
-        <Section
-          title="Unpaid"
-          rows={unpaid}
-          showVerifyButton={false}
-          onMarkVerified={onMarkVerified}
-          emptyText="No registrations without a transaction ID."
-        />
-        <Section
-          title="Awaiting Verification"
-          rows={awaiting}
-          showVerifyButton
-          onMarkVerified={onMarkVerified}
-          emptyText="Nothing waiting on verification."
-        />
-        <Section
-          title="Verified"
-          rows={verified}
-          showVerifyButton={false}
-          onMarkVerified={onMarkVerified}
-          emptyText="No verified registrations yet."
-        />
-      </div>
+      )}
     </div>
   );
 }
