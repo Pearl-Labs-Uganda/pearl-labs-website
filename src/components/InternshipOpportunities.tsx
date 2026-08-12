@@ -44,7 +44,7 @@ const tracks = [
     id: "T3", label: "Track 03",
     title: "Aerospace CAD & 3D Printing", duration: "10 Sessions · 30 hrs",
     blurb:
-      "Links design thinking, computer-aided design and additive manufacturing to the aerospace and drone industries — turning ideas into 3D-printed parts and flying models.",
+      "Explore how design thinking, computer-aided design and additive manufacturing link to the aerospace and drone industries — turning ideas into 3D-printed parts and flying models.",
     cohorts: [
       {
         name: "Cohort A — Explorers (9–13)",
@@ -61,7 +61,7 @@ const tracks = [
 ];
 
 const glance = [
-  { label: "Dates", value: "24th Aug – 4th Sept 2026" },
+  { label: "Dates", value: "24 Aug – 4 Sep 2026" },
   { label: "Schedule", value: "Monday – Saturday, 9:00am – 12:00pm" },
   { label: "Duration", value: "2 Weeks" },
   { label: "Venue", value: "National ICT Hub, Nakawa" },
@@ -233,7 +233,7 @@ export default function InternshipOpportunities() {
         <p style={s.eyebrow}>Limited Slots Available</p>
         <h2 style={s.ctaTitle}>Ready to Register?</h2>
         <p style={s.ctaSub}>
-          24th August – 4th September 2026 at National ICT Hub, Nakawa.
+          24 Aug – 4 Sep 2026 at National ICT Hub, Nakawa.
           Email{" "}
           <strong>pearllabsug@gmail.com</strong> or
           call <strong>+256 763 839356</strong> with any questions.
