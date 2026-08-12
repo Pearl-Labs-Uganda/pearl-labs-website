@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { RegistrationRow } from "@/lib/registrations";
-import { formatUgx } from "@/lib/fee";
+import { formatUgx, MODULE_NAMES } from "@/lib/fee";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -101,6 +101,55 @@ function Row({
   );
 }
 
+function StatTile({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 16px" }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#4C616C" }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: GREEN, marginTop: 4 }}>{value}</div>
+    </div>
+  );
+}
+
+// Single-hue magnitude bars (demand, not identity) — one accent color, no legend needed.
+// Value is direct-labeled at the bar end, so every reading is visible without hover.
+function BarBreakdown({
+  title,
+  items,
+}: {
+  title: string;
+  items: { name: string; count: number; caption?: string }[];
+}) {
+  const max = Math.max(1, ...items.map((i) => i.count));
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16 }}>
+      <h3 style={{ fontSize: 12.5, fontWeight: 700, color: GREEN, marginBottom: 14 }}>{title}</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {items.map((item) => (
+          <div key={item.name}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, color: "#4C616C", marginBottom: 4 }}>
+              <span>{item.name}</span>
+              <span style={{ fontWeight: 700, color: GREEN, whiteSpace: "nowrap" }}>
+                {item.count}
+                {item.caption ? ` · ${item.caption}` : ""}
+              </span>
+            </div>
+            <div style={{ height: 8, background: CREAM, borderRadius: 4 }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${(item.count / max) * 100}%`,
+                  background: ORANGE,
+                  borderRadius: "0 4px 4px 0",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Section({
   title,
   rows,
@@ -132,16 +181,80 @@ function Section({
   );
 }
 
+// Matches the "30 Spots" figure quoted on /apply and /bootcamps — the bootcamp
+// caps at 30 students total, not per cohort.
+const TOTAL_SPOTS = 30;
+
 export default function RegistrationsDashboard({ registrations, onMarkVerified }: Props) {
   const unpaid = registrations.filter((r) => !r.transactionId);
   const awaiting = registrations.filter((r) => r.transactionId && !r.verified);
   const verified = registrations.filter((r) => r.transactionId && r.verified);
+
+  // A transaction ID means the family is claiming a spot, verified or not.
+  const reservedCount = awaiting.length + verified.length;
+  const capacityPct = Math.min(100, Math.round((reservedCount / TOTAL_SPOTS) * 100));
+  const conversionRate =
+    registrations.length > 0 ? Math.round((verified.length / registrations.length) * 100) : 0;
+  const laptopProvisionCount = registrations.filter((r) => r.hasLaptop && r.hasLaptop !== "Yes").length;
+
+  const moduleDemand = MODULE_NAMES.map((name) => {
+    const registeredFor = registrations.filter((r) => r.modules.includes(name));
+    const confirmedRevenue = registeredFor
+      .filter((r) => r.verified)
+      .reduce((sum, r) => sum + r.amountDue / r.modules.length, 0);
+    return {
+      name,
+      count: registeredFor.length,
+      caption: `${formatUgx(Math.round(confirmedRevenue))} confirmed`,
+    };
+  });
+
+  const cohortCounts = new Map<string, number>();
+  for (const r of registrations) cohortCounts.set(r.cohort, (cohortCounts.get(r.cohort) ?? 0) + 1);
+  const cohortSplit = Array.from(cohortCounts.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([name, count]) => ({ name, count }));
+
+  const channelCounts = new Map<string, number>();
+  for (const r of registrations) {
+    if (!r.hearAbout) continue;
+    channelCounts.set(r.hearAbout, (channelCounts.get(r.hearAbout) ?? 0) + 1);
+  }
+  const channelBreakdown = Array.from(channelCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count }));
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 32 }}>
         Bootcamp Registrations
       </h1>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
+        <StatTile label="Total registrations" value={registrations.length} />
+        <StatTile label="Verified" value={verified.length} />
+        <StatTile label="Conversion rate" value={`${conversionRate}%`} />
+        <StatTile label="Need a laptop provided" value={laptopProvisionCount} />
+      </div>
+
+      <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 8 }}>
+          <span style={{ color: "#4C616C", fontWeight: 600 }}>Spots reserved</span>
+          <span style={{ color: GREEN, fontWeight: 700 }}>{reservedCount} / {TOTAL_SPOTS}</span>
+        </div>
+        <div style={{ height: 10, background: CREAM, borderRadius: 5 }}>
+          <div style={{ height: "100%", width: `${capacityPct}%`, background: ORANGE, borderRadius: "0 5px 5px 0" }} />
+        </div>
+        <p style={{ fontSize: 11.5, color: "#4C616C", marginTop: 8 }}>
+          {verified.length} verified · {awaiting.length} awaiting confirmation
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 32 }}>
+        <BarBreakdown title="Module demand" items={moduleDemand} />
+        <BarBreakdown title="Cohort split" items={cohortSplit} />
+        <BarBreakdown title="How they heard about us" items={channelBreakdown} />
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
         <Section
