@@ -30,6 +30,14 @@ const HEAR_ABOUT_OPTIONS = [
   "Other",
 ];
 
+// Pearl AI Labs is deliberately absent — this is already the Pearl Labs site.
+const PARTNERS = [
+  { name: "Lwera Electronics & Semi-conductors", logo: "/logos/lwera.png" },
+  { name: "National ICT Innovation Hub", logo: "/logos/national-ict-hub.png" },
+  { name: "AeRoCAD Learners", logo: "/logos/aerocad.png" },
+  { name: "Kate D", logo: "/logos/kate-d.png" },
+];
+
 interface FormState {
   // Section 1: Parent / Guardian
   parentName: string;
@@ -283,6 +291,41 @@ export default function InternshipApply() {
     </div>
   );
 
+  // Matching helper for a labelled <input>, so the row layout below stays readable
+  const renderInput = (
+    field: keyof FormState,
+    label: string,
+    opts: { placeholder?: string; type?: string } = {},
+  ) => (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      <input
+        style={fieldStyle(field)}
+        type={opts.type ?? "text"}
+        value={form[field] as string}
+        onChange={change(field)}
+        onFocus={() => setFocused(field)}
+        onBlur={() => setFocused(null)}
+        placeholder={opts.placeholder}
+      />
+      {errors[field] && <p style={errorStyle}>{errors[field]}</p>}
+    </div>
+  );
+
+  const renderTextarea = (field: keyof FormState, label: string) => (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      <textarea
+        style={fieldStyle(field, { minHeight: 90, resize: "vertical" })}
+        value={form[field] as string}
+        onChange={change(field)}
+        onFocus={() => setFocused(field)}
+        onBlur={() => setFocused(null)}
+      />
+      {errors[field] && <p style={errorStyle}>{errors[field]}</p>}
+    </div>
+  );
+
   // ── Success screen ───────────────────────────────────────────
   if (status === "sent") {
     return (
@@ -310,7 +353,7 @@ export default function InternshipApply() {
 
       {/* ── Header ───────────────────────────────────────────── */}
       <div style={s.header}>
-        <Link href="/" style={s.navBack}>← pearllabs.ug</Link>
+        <Link href="/bootcamps" style={s.navBack}>← pearllabs.ug</Link>
         <div style={s.pill}>
           <span style={s.pillDot} />
           24 Aug – 4 Sep 2026 · National ICT Hub, Nakawa
@@ -331,6 +374,21 @@ export default function InternshipApply() {
           &amp; 3D Printing. Held at National ICT Hub, Nakawa.
         </p>
 
+        {/* Partner logos — the paragraph above already names them, so no label here.
+            Reuses the sitewide fadeUp keyframe (globals.css) that the Hero uses,
+            staggered per logo so new entries in PARTNERS need no extra CSS. */}
+        <div style={s.partnersRow}>
+          {PARTNERS.map((p, i) => (
+            <img
+              key={p.name}
+              src={p.logo}
+              alt={p.name}
+              className="animate-fade-up"
+              style={{ ...s.partnerLogo, animationDelay: `${i * 0.08}s` }}
+            />
+          ))}
+        </div>
+
         <div style={s.statsRow}>
           {[
             { v: "30",       l: "Spots" },
@@ -346,13 +404,56 @@ export default function InternshipApply() {
         </div>
       </div>
 
+      {/* ── Open House banner ───────────────────────────────── */}
+      <div style={s.tourWrap}>
+        <div style={s.tourCard}>
+          <span style={s.tourPill}>
+            <span style={s.pillDot} />
+            Open House · Parents &amp; Students Welcome
+          </span>
+          <h3 style={s.tourTitle}>
+            Come See Where <em style={s.tourItalic}>They&apos;ll Be Learning</em>
+          </h3>
+          <p style={s.tourText}>
+            Two days before the bootcamp begins, we&apos;re opening the lab so
+            you can see it for yourself. Walk through the space your child
+            would be training in at National ICT Hub, Nakawa, and have a look
+            at the equipment up close — the 3D printer and the robotics car
+            included. Bring the children along and stay as long as you like.
+            No booking, nothing to pay — just come through.
+          </p>
+          <div style={s.tourFacts}>
+            <div style={s.tourFact}>
+              <div style={s.tourFactLabel}>Date</div>
+              <div style={s.tourFactValue}>Sat, 22 Aug 2026</div>
+            </div>
+            <div style={s.tourFact}>
+              <div style={s.tourFactLabel}>Time</div>
+              <div style={s.tourFactValue}>9:00am – 12:00pm</div>
+            </div>
+            <div style={s.tourFact}>
+              <div style={s.tourFactLabel}>Venue</div>
+              <div style={s.tourFactValue}>National ICT Hub, Nakawa</div>
+            </div>
+            <div style={s.tourFact}>
+              <div style={s.tourFactLabel}>Entry</div>
+              <div style={s.tourFactValue}>Free · No booking</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Form card ────────────────────────────────────────── */}
       <div style={s.formWrap}>
         <div style={s.formCard}>
 
           <div style={s.formHeader}>
             <h2 style={s.formTitle}>Registration Form</h2>
-            <p style={s.formSub}>Fields marked with an asterisk (*) are required.</p>
+            <p style={s.formSub}>
+              Fields marked with an asterisk (*) are required. Your answers
+              save automatically on this device, so it&apos;s safe to close
+              this page and pick up where you left off later.
+            </p>
           </div>
 
           {registrationId !== null && (
@@ -376,159 +477,35 @@ export default function InternshipApply() {
 
           {/* Section 1: Parent / Guardian */}
           <p style={s.sectionLabel}>1. Parent / Guardian Information</p>
-          <div style={s.row2}>
-            <div>
-              <label style={labelStyle}>Parent/Guardian Full Name *</label>
-              <input
-                style={fieldStyle("parentName")}
-                value={form.parentName}
-                onChange={change("parentName")}
-                onFocus={() => setFocused("parentName")}
-                onBlur={() => setFocused(null)}
-                placeholder="e.g. Jane Namubiru"
-              />
-              {errors.parentName && <p style={errorStyle}>{errors.parentName}</p>}
-            </div>
-            <div>
-              <label style={labelStyle}>Relationship to Student *</label>
-              <input
-                style={fieldStyle("relationship")}
-                value={form.relationship}
-                onChange={change("relationship")}
-                onFocus={() => setFocused("relationship")}
-                onBlur={() => setFocused(null)}
-                placeholder="e.g. Mother, Father, Guardian"
-              />
-              {errors.relationship && <p style={errorStyle}>{errors.relationship}</p>}
-            </div>
+          <div style={s.row3}>
+            {renderInput("parentName", "Full Name *", { placeholder: "e.g. Jane Namubiru" })}
+            {renderInput("relationship", "Relationship *", { placeholder: "e.g. Mother, Guardian" })}
+            {renderInput("profession", "Profession *")}
           </div>
-
-          <div style={{ marginTop: 20 }}>
-            <label style={labelStyle}>Profession *</label>
-            <input
-              style={fieldStyle("profession")}
-              value={form.profession}
-              onChange={change("profession")}
-              onFocus={() => setFocused("profession")}
-              onBlur={() => setFocused(null)}
-            />
-            {errors.profession && <p style={errorStyle}>{errors.profession}</p>}
+          <div style={{ ...s.row3, marginTop: 18 }}>
+            {renderInput("phone", "Primary Phone *", { placeholder: "+256 7XX XXX XXX" })}
+            {renderInput("altPhone", "Alt. Phone", { placeholder: "Optional" })}
+            {renderInput("email", "Email Address *", { type: "email", placeholder: "you@example.com" })}
           </div>
-
-          <div style={{ ...s.row2, marginTop: 20 }}>
-            <div>
-              <label style={labelStyle}>Primary Phone Number *</label>
-              <input
-                style={fieldStyle("phone")}
-                value={form.phone}
-                onChange={change("phone")}
-                onFocus={() => setFocused("phone")}
-                onBlur={() => setFocused(null)}
-                placeholder="+256 7XX XXX XXX"
-              />
-              {errors.phone && <p style={errorStyle}>{errors.phone}</p>}
-            </div>
-            <div>
-              <label style={labelStyle}>Alternative Phone Number</label>
-              <input
-                style={fieldStyle("altPhone")}
-                value={form.altPhone}
-                onChange={change("altPhone")}
-                onFocus={() => setFocused("altPhone")}
-                onBlur={() => setFocused(null)}
-                placeholder="Optional"
-              />
-            </div>
-          </div>
-
-          <div style={{ ...s.row2, marginTop: 20 }}>
-            <div>
-              <label style={labelStyle}>Email Address *</label>
-              <input
-                style={fieldStyle("email")}
-                type="email"
-                value={form.email}
-                onChange={change("email")}
-                onFocus={() => setFocused("email")}
-                onBlur={() => setFocused(null)}
-                placeholder="you@example.com"
-              />
-              {errors.email && <p style={errorStyle}>{errors.email}</p>}
-            </div>
-            <div>
-              <label style={labelStyle}>Home Address *</label>
-              <input
-                style={fieldStyle("address")}
-                value={form.address}
-                onChange={change("address")}
-                onFocus={() => setFocused("address")}
-                onBlur={() => setFocused(null)}
-              />
-              {errors.address && <p style={errorStyle}>{errors.address}</p>}
-            </div>
+          <div style={{ marginTop: 18 }}>
+            {renderInput("address", "Home Address *")}
           </div>
 
           <div style={s.divider} />
 
           {/* Section 2: Student */}
           <p style={s.sectionLabel}>2. Student Information</p>
-          <div style={s.row2}>
-            <div>
-              <label style={labelStyle}>Student Full Name *</label>
-              <input
-                style={fieldStyle("studentName")}
-                value={form.studentName}
-                onChange={change("studentName")}
-                onFocus={() => setFocused("studentName")}
-                onBlur={() => setFocused(null)}
-              />
-              {errors.studentName && <p style={errorStyle}>{errors.studentName}</p>}
-            </div>
-            <div>
-              <label style={labelStyle}>Age *</label>
-              <input
-                style={fieldStyle("age")}
-                value={form.age}
-                onChange={change("age")}
-                onFocus={() => setFocused("age")}
-                onBlur={() => setFocused(null)}
-                placeholder="e.g. 10, 14"
-              />
-              {errors.age && <p style={errorStyle}>{errors.age}</p>}
-            </div>
-          </div>
-
-          <div style={{ ...s.row2, marginTop: 20 }}>
+          <div style={s.row3}>
+            {renderInput("studentName", "Student Name *")}
+            {renderInput("age", "Age *", { placeholder: "e.g. 10, 14" })}
             {renderSelect("gender", "Gender *", ["Male", "Female"])}
-            <div>
-              <label style={labelStyle}>School Name *</label>
-              <input
-                style={fieldStyle("school")}
-                value={form.school}
-                onChange={change("school")}
-                onFocus={() => setFocused("school")}
-                onBlur={() => setFocused(null)}
-              />
-              {errors.school && <p style={errorStyle}>{errors.school}</p>}
-            </div>
           </div>
-
-          <div style={{ ...s.row2, marginTop: 20 }}>
-            <div>
-              <label style={labelStyle}>Class / Grade *</label>
-              <input
-                style={fieldStyle("classGrade")}
-                value={form.classGrade}
-                onChange={change("classGrade")}
-                onFocus={() => setFocused("classGrade")}
-                onBlur={() => setFocused(null)}
-              />
-              {errors.classGrade && <p style={errorStyle}>{errors.classGrade}</p>}
-            </div>
-            {renderSelect("cohort", "Which cohort does the student fall under? *", COHORTS)}
+          <div style={{ ...s.row3, marginTop: 18 }}>
+            {renderInput("school", "School Name *")}
+            {renderInput("classGrade", "Class / Grade *")}
+            {renderSelect("cohort", "Cohort *", COHORTS)}
           </div>
-
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 18 }}>
             {renderSelect(
               "hasLaptop",
               "Does the student have a laptop? *",
@@ -561,68 +538,52 @@ export default function InternshipApply() {
           </div>
           {errors.modules && <p style={errorStyle}>{errors.modules}</p>}
 
-          <div style={{ marginTop: 20 }}>
+          <div style={{ ...s.row2, marginTop: 18 }}>
             {renderSelect("hearAbout", "How did you hear about us? *", HEAR_ABOUT_OPTIONS)}
+            {form.hearAbout === "Other" && renderInput("hearAboutOther", "Please specify *")}
           </div>
-
-          {form.hearAbout === "Other" && (
-            <div style={{ marginTop: 20 }}>
-              <label style={labelStyle}>Please specify</label>
-              <input
-                style={fieldStyle("hearAboutOther")}
-                value={form.hearAboutOther}
-                onChange={change("hearAboutOther")}
-                onFocus={() => setFocused("hearAboutOther")}
-                onBlur={() => setFocused(null)}
-              />
-              {errors.hearAboutOther && <p style={errorStyle}>{errors.hearAboutOther}</p>}
-            </div>
-          )}
 
           <div style={s.divider} />
 
           {/* Section 4: Payment */}
           <p style={s.sectionLabel}>4. Payment</p>
 
-          <div style={s.amountBox}>
-            <span style={s.amountLabel}>Amount Due</span>
-            <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+          <div style={{ ...s.row2, marginTop: 16 }}>
+            <div style={s.amountBox}>
+              <span style={s.amountLabel}>Amount Due</span>
+              <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={copyMerchantCode}
+                style={s.merchantCodeBox}
+              >
+                <span style={s.merchantCodeLabel}>Merchant Code</span>
+                <span style={s.merchantCodeRight}>
+                  <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
+                  {codeCopied ? (
+                    <Check size={18} color={ORANGE} />
+                  ) : (
+                    <Copy size={18} color={ORANGE} />
+                  )}
+                </span>
+              </button>
+              {codeCopied && <p style={s.copiedHint}>Copied!</p>}
+            </div>
           </div>
 
           <p style={s.paymentInstructions}>
             Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
             select <strong>Pay Merchant / Pay Bill</strong>, then enter the
-            merchant code below, the amount above, and confirm with your MTN
+            merchant code above, the amount above, and confirm with your MTN
             MoMo PIN.
           </p>
 
-          <button
-            type="button"
-            onClick={copyMerchantCode}
-            style={s.merchantCodeBox}
-          >
-            <span style={s.merchantCodeLabel}>Merchant Code</span>
-            <span style={s.merchantCodeRight}>
-              <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
-              {codeCopied ? (
-                <Check size={18} color={ORANGE} />
-              ) : (
-                <Copy size={18} color={ORANGE} />
-              )}
-            </span>
-          </button>
-          {codeCopied && <p style={s.copiedHint}>Copied!</p>}
-
-          <div style={{ marginTop: 20 }}>
-            <label style={labelStyle}>Transaction ID</label>
-            <input
-              style={fieldStyle("transactionId")}
-              value={form.transactionId}
-              onChange={change("transactionId")}
-              onFocus={() => setFocused("transactionId")}
-              onBlur={() => setFocused(null)}
-              placeholder="e.g. from your MTN MoMo confirmation SMS"
-            />
+          <div style={{ marginTop: 18 }}>
+            {renderInput("transactionId", "Transaction ID", {
+              placeholder: "e.g. from your MTN MoMo confirmation SMS",
+            })}
             <p style={s.fieldHint}>
               Don&apos;t have it yet? Leave this blank and submit — your
               details are saved, so you can come back and add it once
@@ -637,52 +598,25 @@ export default function InternshipApply() {
           <p style={s.sectionHint}>
             We offer drop-off and pick-up services for students attending the training.
           </p>
-          {renderSelect(
-            "pickupService",
-            "Would you like to use our drop-off and pick-up service? *",
-            ["Yes", "No"],
-          )}
-
-          {form.pickupService === "Yes" && (
-            <div style={{ marginTop: 20 }}>
-              <label style={labelStyle}>Pick-up Location</label>
-              <input
-                style={fieldStyle("pickupLocation")}
-                value={form.pickupLocation}
-                onChange={change("pickupLocation")}
-                onFocus={() => setFocused("pickupLocation")}
-                onBlur={() => setFocused(null)}
-                placeholder="Share your child's pick-up location"
-              />
-              {errors.pickupLocation && <p style={errorStyle}>{errors.pickupLocation}</p>}
-            </div>
-          )}
+          <div style={s.row2}>
+            {renderSelect(
+              "pickupService",
+              "Use our drop-off and pick-up service? *",
+              ["Yes", "No"],
+            )}
+            {form.pickupService === "Yes" &&
+              renderInput("pickupLocation", "Pick-up Location *", {
+                placeholder: "Share your child's pick-up location",
+              })}
+          </div>
 
           <div style={s.divider} />
 
-          {/* Section 5: Medical */}
+          {/* Section 6: Medical */}
           <p style={s.sectionLabel}>6. Medical Information</p>
-          <div>
-            <label style={labelStyle}>
-              Does your child have any allergies, medical conditions, or special needs we should be aware of?
-            </label>
-            <textarea
-              style={fieldStyle("medicalInfo", { minHeight: 90, resize: "vertical" })}
-              value={form.medicalInfo}
-              onChange={change("medicalInfo")}
-              onFocus={() => setFocused("medicalInfo")}
-              onBlur={() => setFocused(null)}
-            />
-          </div>
-          <div style={{ marginTop: 20 }}>
-            <label style={labelStyle}>Any additional information you&apos;d like us to know?</label>
-            <textarea
-              style={fieldStyle("additionalInfo", { minHeight: 90, resize: "vertical" })}
-              value={form.additionalInfo}
-              onChange={change("additionalInfo")}
-              onFocus={() => setFocused("additionalInfo")}
-              onBlur={() => setFocused(null)}
-            />
+          <div style={s.row2}>
+            {renderTextarea("medicalInfo", "Allergies, medical conditions, or special needs?")}
+            {renderTextarea("additionalInfo", "Anything else you'd like us to know?")}
           </div>
 
           <div style={s.divider} />
@@ -710,7 +644,7 @@ export default function InternshipApply() {
           <div style={{ marginTop: 18 }}>
             {renderSelect(
               "photoConsent",
-              "I consent to my child being photographed / recorded during the program for promotional use by Pearl AI Labs / Lwera Electronics & Semi-conductors. *",
+              "I consent to my child being photographed / recorded during the programme for promotional use by Pearl AI Labs / Lwera Electronics & Semi-conductors. *",
               ["Yes", "No"],
             )}
           </div>
@@ -749,6 +683,8 @@ const s: Record<string, React.CSSProperties> = {
   navBack: { fontSize: 13, fontWeight: 600, color: GREEN, textDecoration: "none" },
   pill: { display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: TEXT_MUTED, border: `1px solid ${BORDER}`, borderRadius: 999, padding: "5px 14px" },
   pillDot: { width: 6, height: 6, borderRadius: "50%", background: ORANGE, display: "inline-block" },
+  partnersRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: "16px 26px", marginTop: -14, marginBottom: 38 },
+  partnerLogo: { height: 40, width: "auto", maxWidth: 185, objectFit: "contain", flexShrink: 0 },
   hero: { maxWidth: 760, margin: "0 auto", padding: "40px 32px 56px" },
   eyebrow: { fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: ORANGE, marginBottom: 14, fontWeight: 600 },
   heroTitle: { fontSize: "clamp(40px, 7vw, 68px)", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-0.03em", color: GREEN, marginBottom: 20 },
@@ -758,27 +694,38 @@ const s: Record<string, React.CSSProperties> = {
   stat: { display: "flex", flexDirection: "column", gap: 4 },
   statVal: { fontSize: 22, fontWeight: 800, color: ORANGE, lineHeight: 1, letterSpacing: "-0.01em" },
   statLbl: { fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: TEXT_LIGHT },
+  tourWrap: { maxWidth: 760, margin: "0 auto", padding: "0 32px 48px" },
+  tourCard: { background: GREEN, borderRadius: 16, padding: "36px 40px" },
+  tourPill: { display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#F4FAFF", border: "1px solid rgba(244,250,255,0.25)", borderRadius: 999, padding: "5px 14px", marginBottom: 18, fontWeight: 600 },
+  tourTitle: { fontSize: "clamp(22px, 3.4vw, 30px)", fontWeight: 800, letterSpacing: "-0.01em", color: "#F4FAFF", lineHeight: 1.25, marginBottom: 14 },
+  tourItalic: { fontStyle: "italic", color: ORANGE },
+  tourText: { fontSize: 14, lineHeight: 1.75, color: "rgba(244,250,255,0.72)", maxWidth: 560, marginBottom: 28 },
+  tourFacts: { display: "flex", gap: 32, flexWrap: "wrap", borderTop: "1px solid rgba(244,250,255,0.15)", paddingTop: 22 },
+  tourFact: { display: "flex", flexDirection: "column", gap: 4 },
+  tourFactLabel: { fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: ORANGE },
+  tourFactValue: { fontSize: 13.5, fontWeight: 600, color: "#F4FAFF" },
   formWrap: { maxWidth: 760, margin: "0 auto", padding: "0 32px 96px" },
   formCard: { background: "#fff", borderRadius: 16, padding: "40px", border: `1px solid ${BORDER}`, boxShadow: "0 8px 44px rgba(0,45,91,0.07)" },
   formHeader: { marginBottom: 24 },
   formTitle: { fontSize: 24, fontWeight: 800, color: GREEN, letterSpacing: "-0.01em" },
-  formSub: { fontSize: 13, color: TEXT_MUTED, marginTop: 6 },
+  formSub: { fontSize: 13, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.6, maxWidth: 480 },
   draftBanner: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12.5, color: TEXT_MUTED, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", marginTop: 16 },
   draftBannerLink: { background: "none", border: "none", color: ORANGE, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
   savedBanner: { fontSize: 13, color: GREEN, lineHeight: 1.6, background: "#FFF6EC", border: `1px solid ${ORANGE}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
-  divider: { height: 1, background: BORDER, margin: "28px 0" },
+  divider: { height: 1, background: BORDER, margin: "24px 0" },
   sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: GREEN, marginBottom: 6 },
-  sectionHint: { fontSize: 13, color: TEXT_MUTED, marginBottom: 18, lineHeight: 1.6 },
-  row2: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 },
+  sectionHint: { fontSize: 13, color: TEXT_MUTED, marginBottom: 14, lineHeight: 1.6 },
+  row2: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 },
+  row3: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 18 },
   checkboxRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.6, cursor: "pointer" },
   checkbox: { marginTop: 3, width: 16, height: 16, accentColor: ORANGE, flexShrink: 0, cursor: "pointer" },
-  moduleGroup: { display: "flex", flexDirection: "column", gap: 10, marginTop: 8 },
-  moduleRow: { display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: GREEN, fontWeight: 500, cursor: "pointer", padding: "12px 16px", background: CREAM, border: `1.5px solid ${BORDER}`, borderRadius: 8 },
-  amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", background: GREEN, borderRadius: 10, padding: "16px 20px", marginTop: 18 },
+  moduleGroup: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginTop: 8 },
+  moduleRow: { display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: GREEN, fontWeight: 500, cursor: "pointer", padding: "12px 14px", background: CREAM, border: `1.5px solid ${BORDER}`, borderRadius: 8, lineHeight: 1.35 },
+  amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: GREEN, borderRadius: 10, padding: "16px 20px" },
   amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(244,250,255,0.7)", fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 800, color: "#fff" },
   paymentInstructions: { fontSize: 13.5, color: TEXT_MUTED, lineHeight: 1.8, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
-  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", background: "#FFF6EC", border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: "14px 20px", marginTop: 10, width: "100%", cursor: "pointer", font: "inherit" },
+  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: "#FFF6EC", border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit" },
   merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: ORANGE, fontWeight: 700 },
   merchantCodeRight: { display: "flex", alignItems: "center", gap: 10 },
   merchantCodeValue: { fontSize: 22, fontWeight: 800, color: GREEN, letterSpacing: "0.08em", fontFamily: "monospace" },
