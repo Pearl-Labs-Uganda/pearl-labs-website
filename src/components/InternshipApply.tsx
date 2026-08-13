@@ -616,6 +616,12 @@ export default function InternshipApply() {
             MoMo PIN.
           </p>
 
+          <p style={s.cashNote}>
+            <strong>Prefer to pay cash?</strong> You&apos;re welcome to pay in
+            person — on the first day of the bootcamp, or any time before
+            then during working hours, at Pearl Labs.
+          </p>
+
           <div style={{ marginTop: 18 }}>
             {renderInput("transactionId", "Transaction ID", {
               placeholder: "e.g. from your MTN MoMo confirmation SMS",
@@ -764,6 +770,7 @@ const s: Record<string, React.CSSProperties> = {
   amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 800, color: FORM_BLACK },
   paymentInstructions: { fontSize: 13.5, color: FORM_BLACK, lineHeight: 1.8, background: FORM_GREY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
+  cashNote: { fontSize: 14, color: FORM_BLACK, lineHeight: 1.7, background: BUTTON_GREY, border: `1.5px solid ${FORM_BLACK}`, borderRadius: 8, padding: "14px 16px", marginTop: 12 },
   merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: BUTTON_GREY, border: `1.5px solid ${FORM_BLACK}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit" },
   merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
   merchantCodeRight: { display: "flex", alignItems: "center", gap: 10 },
