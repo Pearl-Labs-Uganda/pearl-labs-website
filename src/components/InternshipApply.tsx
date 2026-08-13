@@ -18,6 +18,15 @@ const TEXT_MUTED = "#4C616C";
 const TEXT_LIGHT = "#4C616C";
 const BORDER     = "rgba(0,45,91,0.12)";
 
+// ── Form-card palette ─────────────────────────────────────────
+// Three roles, applied inside the registration card only — the page around it
+// keeps the brand colours. White is background and nothing else, black is
+// every word, grey is anything you touch: fields sit on the light grey,
+// buttons and the payment panels on the darker one so they read as raised.
+const FORM_GREY   = "#F1F1F1";
+const BUTTON_GREY = "#D4D4D4";
+const FORM_BLACK  = "#111111";
+
 const COHORTS = [
   "Cohort A — Explorers (Ages 9–13)",
   "Cohort B — Innovators (Ages 13–19)",
@@ -258,9 +267,12 @@ export default function InternshipApply() {
     padding: "13px 16px",
     fontSize: 14,
     fontFamily: "inherit",
-    color: GREEN,
-    background: focused === name ? "#fff" : CREAM,
-    border: `1.5px solid ${errors[name as keyof FormState] ? "#C0392B" : focused === name ? ORANGE : BORDER}`,
+    color: FORM_BLACK,
+    background: focused === name ? "#fff" : FORM_GREY,
+    // Focus and error both go to solid black; the message beside an errored
+    // field names the problem in words, so nothing rests on telling two
+    // shades apart.
+    border: `1.5px solid ${errors[name as keyof FormState] || focused === name ? FORM_BLACK : BORDER}`,
     borderRadius: 8,
     outline: "none",
     transition: "border-color 0.2s, background 0.2s",
@@ -274,13 +286,14 @@ export default function InternshipApply() {
     fontWeight: 600,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    color: TEXT_MUTED,
+    color: FORM_BLACK,
     marginBottom: 7,
   };
 
   const errorStyle: React.CSSProperties = {
     fontSize: 11,
-    color: "#C0392B",
+    fontWeight: 600,
+    color: FORM_BLACK,
     marginTop: 4,
   };
 
@@ -330,11 +343,16 @@ export default function InternshipApply() {
     </div>
   );
 
+  // The two medical prompts are different lengths, so the longer label wraps
+  // to two lines and the shorter one doesn't. Each cell is a flex column with
+  // the box pushed to the bottom — the grid already makes both cells the same
+  // height, so pinning to the bottom lines the boxes up regardless of how the
+  // labels wrap, and it relaxes on its own once the grid stacks to one column.
   const renderTextarea = (field: keyof FormState, label: string) => (
-    <div>
+    <div style={s.textareaCell}>
       <label style={labelStyle}>{label}</label>
       <textarea
-        style={fieldStyle(field, { minHeight: 90, resize: "vertical" })}
+        style={fieldStyle(field, { minHeight: 90, resize: "vertical", marginTop: "auto" })}
         value={form[field] as string}
         onChange={change(field)}
         onFocus={() => handleFieldFocus(field)}
@@ -581,9 +599,9 @@ export default function InternshipApply() {
                 <span style={s.merchantCodeRight}>
                   <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
                   {codeCopied ? (
-                    <Check size={18} color={ORANGE} />
+                    <Check size={18} color={FORM_BLACK} />
                   ) : (
-                    <Copy size={18} color={ORANGE} />
+                    <Copy size={18} color={FORM_BLACK} />
                   )}
                 </span>
               </button>
@@ -725,33 +743,36 @@ const s: Record<string, React.CSSProperties> = {
   formWrap: { maxWidth: 760, margin: "0 auto", padding: "0 32px 96px" },
   formCard: { background: "#fff", borderRadius: 16, padding: "40px", border: `1px solid ${BORDER}`, boxShadow: "0 8px 44px rgba(0,45,91,0.07)" },
   formHeader: { marginBottom: 24 },
-  formTitle: { fontSize: 24, fontWeight: 800, color: GREEN, letterSpacing: "-0.01em" },
-  formSub: { fontSize: 13, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.6, maxWidth: 480 },
-  draftBanner: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12.5, color: TEXT_MUTED, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", marginTop: 16 },
-  draftBannerLink: { background: "none", border: "none", color: ORANGE, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
-  savedBanner: { fontSize: 13, color: GREEN, lineHeight: 1.6, background: "#FFF6EC", border: `1px solid ${ORANGE}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
+  formTitle: { fontSize: 24, fontWeight: 800, color: FORM_BLACK, letterSpacing: "-0.01em" },
+  formSub: { fontSize: 13, color: FORM_BLACK, marginTop: 6, lineHeight: 1.6, maxWidth: 480 },
+  draftBanner: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12.5, color: FORM_BLACK, background: FORM_GREY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", marginTop: 16 },
+  draftBannerLink: { background: "none", border: "none", color: FORM_BLACK, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
+  savedBanner: { fontSize: 13, color: FORM_BLACK, lineHeight: 1.6, background: FORM_GREY, border: `1px solid ${FORM_BLACK}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
   divider: { height: 1, background: BORDER, margin: "24px 0" },
-  sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: GREEN, marginBottom: 6 },
-  sectionHint: { fontSize: 13, color: TEXT_MUTED, marginBottom: 14, lineHeight: 1.6 },
+  sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, marginBottom: 6 },
+  sectionHint: { fontSize: 13, color: FORM_BLACK, marginBottom: 14, lineHeight: 1.6 },
   row2: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 },
+  textareaCell: { display: "flex", flexDirection: "column" },
   row3: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: 18 },
-  checkboxRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: TEXT_MUTED, lineHeight: 1.6, cursor: "pointer" },
-  checkbox: { marginTop: 3, width: 16, height: 16, accentColor: ORANGE, flexShrink: 0, cursor: "pointer" },
+  checkboxRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, color: FORM_BLACK, lineHeight: 1.6, cursor: "pointer" },
+  checkbox: { marginTop: 3, width: 16, height: 16, accentColor: FORM_BLACK, flexShrink: 0, cursor: "pointer" },
   moduleGroup: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginTop: 8 },
-  moduleRow: { display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: GREEN, fontWeight: 500, cursor: "pointer", padding: "12px 14px", background: CREAM, border: `1.5px solid ${BORDER}`, borderRadius: 8, lineHeight: 1.35 },
-  amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: GREEN, borderRadius: 10, padding: "16px 20px" },
-  amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(244,250,255,0.7)", fontWeight: 700 },
-  amountValue: { fontSize: 20, fontWeight: 800, color: "#fff" },
-  paymentInstructions: { fontSize: 13.5, color: TEXT_MUTED, lineHeight: 1.8, background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
-  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: "#FFF6EC", border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit" },
-  merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: ORANGE, fontWeight: 700 },
+  moduleRow: { display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: FORM_BLACK, fontWeight: 500, cursor: "pointer", padding: "12px 14px", background: FORM_GREY, border: `1.5px solid ${BORDER}`, borderRadius: 8, lineHeight: 1.35 },
+  // The amount and the merchant code are a matched pair — same grey, so the
+  // row reads as one instruction: what you owe, where you send it.
+  amountBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: BUTTON_GREY, borderRadius: 10, padding: "16px 20px" },
+  amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
+  amountValue: { fontSize: 20, fontWeight: 800, color: FORM_BLACK },
+  paymentInstructions: { fontSize: 13.5, color: FORM_BLACK, lineHeight: 1.8, background: FORM_GREY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
+  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: BUTTON_GREY, border: `1.5px solid ${FORM_BLACK}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit" },
+  merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
   merchantCodeRight: { display: "flex", alignItems: "center", gap: 10 },
-  merchantCodeValue: { fontSize: 22, fontWeight: 800, color: GREEN, letterSpacing: "0.08em", fontFamily: "monospace" },
-  copiedHint: { fontSize: 12, color: ORANGE, fontWeight: 600, marginTop: 6, textAlign: "right" },
-  fieldHint: { fontSize: 11.5, color: TEXT_MUTED, marginTop: 6, lineHeight: 1.6 },
-  paymentNote: { fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: CREAM, borderRadius: 8, border: `1px solid ${BORDER}` },
-  submitErrorText: { fontSize: 13, color: "#C0392B", marginTop: 16 },
-  submitBtn: { width: "100%", marginTop: 20, padding: "15px", background: ORANGE, color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", border: "none", borderRadius: 8, textAlign: "center" },
+  merchantCodeValue: { fontSize: 22, fontWeight: 800, color: FORM_BLACK, letterSpacing: "0.08em", fontFamily: "monospace" },
+  copiedHint: { fontSize: 12, color: FORM_BLACK, fontWeight: 600, marginTop: 6, textAlign: "right" },
+  fieldHint: { fontSize: 11.5, color: FORM_BLACK, marginTop: 6, lineHeight: 1.6 },
+  paymentNote: { fontSize: 12.5, color: FORM_BLACK, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: FORM_GREY, borderRadius: 8, border: `1px solid ${BORDER}` },
+  submitErrorText: { fontSize: 13, fontWeight: 600, color: FORM_BLACK, marginTop: 16 },
+  submitBtn: { width: "100%", marginTop: 20, padding: "15px", background: BUTTON_GREY, color: FORM_BLACK, fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", border: `1.5px solid ${FORM_BLACK}`, borderRadius: 8, textAlign: "center" },
   successWrap: { maxWidth: 480, margin: "0 auto", padding: "120px 32px", textAlign: "center" },
   successIcon: { width: 64, height: 64, borderRadius: "50%", background: "#E9F6EE", color: "#1E7B45", fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" },
   successTitle: { fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 14 },
