@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import InternshipApply from "@/components/InternshipApply";
+import MicrosoftClarity from "@/components/MicrosoftClarity";
 
 export const metadata: Metadata = {
   title: "Apply — Pearl AI Labs Bootcamps",
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function ApplyPage() {
-  return <InternshipApply />;
+  return (
+    <>
+      <MicrosoftClarity />
+      <InternshipApply />
+    </>
+  );
 }
