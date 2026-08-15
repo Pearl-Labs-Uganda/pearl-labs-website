@@ -11,7 +11,7 @@ const tracks = [
       "Learn how computers are instructed and how modern AI — including large language models — learns, reasons and generates. Move from thinking like a programmer to building and prompting AI-powered projects.",
     cohorts: [
       {
-        name: "Cohort A — Explorers (9–13)",
+        name: "Cohort A — Explorers (6–13)",
         competency:
           "Designs and builds a simple AI-powered project using block-based coding (Scratch, Teachable Machine), demonstrating computational thinking and responsible use of technology.",
       },
@@ -29,7 +29,7 @@ const tracks = [
       "Discover how sensors, actuators and code combine to make machines sense and act on the world — building and programming working robots.",
     cohorts: [
       {
-        name: "Cohort A — Explorers (9–13)",
+        name: "Cohort A — Explorers (6–13)",
         competency:
           "Builds and programs a simple robot that senses and responds to its environment, working safely and collaboratively.",
       },
@@ -47,7 +47,7 @@ const tracks = [
       "Explore how design thinking, computer-aided design and additive manufacturing link to the aerospace and drone industries — turning ideas into 3D-printed parts and flying models.",
     cohorts: [
       {
-        name: "Cohort A — Explorers (9–13)",
+        name: "Cohort A — Explorers (6–13)",
         competency:
           "Designs simple 3D models, 3D-prints a part, and builds and tests a basic flying model, applying design thinking and the principles of flight.",
       },
@@ -65,7 +65,7 @@ const glance = [
   { label: "Schedule", value: "Monday – Saturday, 9:00am – 12:00pm" },
   { label: "Duration", value: "2 Weeks" },
   { label: "Venue", value: "National ICT Hub, Nakawa" },
-  { label: "Ages", value: "9 – 19 (Cohort A: 9–13, Cohort B: 13–19)" },
+  { label: "Ages", value: "6 – 19 (Cohort A: 6–13, Cohort B: 13–19)" },
   { label: "Spots", value: "30 total (whole bootcamp)" },
 ];
 
@@ -105,7 +105,7 @@ export default function InternshipOpportunities() {
         </h1>
 
         <p style={s.heroSub}>
-          A two-week, hands-on intensive introducing learners aged 9–19 to three
+          A two-week, hands-on intensive introducing learners aged 6–19 to three
           frontier-technology fields — AI &amp; Coding, Robotics, and Aerospace CAD
           &amp; 3D Printing. Each learner picks one track and builds a real,
           showcase-ready project by the end of the programme.
@@ -124,7 +124,7 @@ export default function InternshipOpportunities() {
           {[
             { value: "3",       label: "Tracks" },
             { value: "10",      label: "Sessions" },
-            { value: "9–19",    label: "Ages" },
+            { value: "6–19",    label: "Ages" },
             { value: "30",      label: "Spots Available" },
           ].map((stat) => (
             <div key={stat.label} style={s.stat}>

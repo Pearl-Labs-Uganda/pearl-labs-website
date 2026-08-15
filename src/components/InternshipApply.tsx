@@ -28,7 +28,7 @@ const BUTTON_GREY = "#D4D4D4";
 const FORM_BLACK  = "#111111";
 
 const COHORTS = [
-  "Cohort A — Explorers (Ages 9–13)",
+  "Cohort A — Explorers (Ages 6–13)",
   "Cohort B — Innovators (Ages 13–19)",
 ];
 
@@ -430,7 +430,7 @@ export default function InternshipApply() {
             { v: "30",       l: "Spots" },
             { v: "Mon–Sat",  l: "Schedule" },
             { v: "Nakawa",   l: "ICT Hub" },
-            { v: "9–19",     l: "Ages" },
+            { v: "6–19",     l: "Ages" },
           ].map(stat => (
             <div key={stat.l} style={s.stat}>
               <div style={s.statVal}>{stat.v}</div>
