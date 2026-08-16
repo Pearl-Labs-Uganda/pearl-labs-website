@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ChevronDown } from "lucide-react";
 import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
 import { trackEvent } from "@/lib/analytics";
 
@@ -110,8 +110,48 @@ export default function InternshipApply() {
   const [submitError, setSubmitError] = useState<string>("");
   const [focused, setFocused] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({
+    1: true,
+    2: true,
+    3: true,
+    4: true,
+    5: true,
+    6: true,
+    7: true,
+  });
   const loadedDraft = useRef(false);
   const formStarted = useRef(false);
+
+  const toggleSection = (id: number) => {
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const allExpanded = Object.values(openSections).every(Boolean);
+  const toggleAllSections = () => {
+    const next = !allExpanded;
+    setOpenSections({ 1: next, 2: next, 3: next, 4: next, 5: next, 6: next, 7: next });
+  };
+
+  const sectionHasErrors = (sec: number): boolean => {
+    switch (sec) {
+      case 1:
+        return Boolean(errors.parentName || errors.relationship || errors.profession || errors.phone || errors.email || errors.address);
+      case 2:
+        return Boolean(errors.studentName || errors.age || errors.gender || errors.school || errors.classGrade || errors.cohort || errors.hasLaptop);
+      case 3:
+        return Boolean(errors.modules || errors.hearAbout || errors.hearAboutOther);
+      case 4:
+        return Boolean(errors.transactionId);
+      case 5:
+        return Boolean(errors.pickupService || errors.pickupLocation);
+      case 6:
+        return Boolean(errors.medicalInfo || errors.additionalInfo);
+      case 7:
+        return Boolean(errors.agreeTerms || errors.photoConsent);
+      default:
+        return false;
+    }
+  };
 
   // Fires once per visit, on the first field the visitor touches — pairs with
   // form_submitted in handleSubmit to build a start-to-finish funnel in GA4.
@@ -220,7 +260,20 @@ export default function InternshipApply() {
   // ── Submit ──────────────────────────────────────────────────
   const handleSubmit = async () => {
     const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+    if (Object.keys(e).length) {
+      setErrors(e);
+      setOpenSections(prev => ({
+        ...prev,
+        1: prev[1] || Boolean(e.parentName || e.relationship || e.profession || e.phone || e.email || e.address),
+        2: prev[2] || Boolean(e.studentName || e.age || e.gender || e.school || e.classGrade || e.cohort || e.hasLaptop),
+        3: prev[3] || Boolean(e.modules || e.hearAbout || e.hearAboutOther),
+        4: prev[4] || Boolean(e.transactionId),
+        5: prev[5] || Boolean(e.pickupService || e.pickupLocation),
+        6: prev[6] || Boolean(e.medicalInfo || e.additionalInfo),
+        7: prev[7] || Boolean(e.agreeTerms || e.photoConsent),
+      }));
+      return;
+    }
 
     setStatus("sending");
     setSubmitError("");
@@ -511,190 +564,345 @@ export default function InternshipApply() {
 
           <div style={s.divider} />
 
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+            <button
+              type="button"
+              onClick={toggleAllSections}
+              style={s.expandAllBtn}
+            >
+              {allExpanded ? "Collapse all sections" : "Expand all sections"}
+            </button>
+          </div>
+
           {/* Section 1: Parent / Guardian */}
-          <p style={s.sectionLabel}>1. Parent / Guardian Information</p>
-          <div style={s.row3}>
-            {renderInput("parentName", "Full Name *", { placeholder: "e.g. Jane Namubiru" })}
-            {renderInput("relationship", "Relationship *", { placeholder: "e.g. Mother, Guardian" })}
-            {renderInput("profession", "Profession *")}
-          </div>
-          <div style={{ ...s.row3, marginTop: 18 }}>
-            {renderInput("phone", "Primary Phone *", { placeholder: "+256 7XX XXX XXX" })}
-            {renderInput("altPhone", "Alt. Phone", { placeholder: "Optional" })}
-            {renderInput("email", "Email Address *", { type: "email", placeholder: "you@example.com" })}
-          </div>
-          <div style={{ marginTop: 18 }}>
-            {renderInput("address", "Home Address *")}
-          </div>
+          <button
+            type="button"
+            onClick={() => toggleSection(1)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[1]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>1. Parent / Guardian Information</p>
+              {sectionHasErrors(1) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[1] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[1] && (
+            <div style={{ marginTop: 14 }}>
+              <div style={s.row3}>
+                {renderInput("parentName", "Full Name *", { placeholder: "e.g. Jane Namubiru" })}
+                {renderInput("relationship", "Relationship *", { placeholder: "e.g. Mother, Guardian" })}
+                {renderInput("profession", "Profession *")}
+              </div>
+              <div style={{ ...s.row3, marginTop: 18 }}>
+                {renderInput("phone", "Primary Phone *", { placeholder: "+256 7XX XXX XXX" })}
+                {renderInput("altPhone", "Alt. Phone", { placeholder: "Optional" })}
+                {renderInput("email", "Email Address *", { type: "email", placeholder: "you@example.com" })}
+              </div>
+              <div style={{ marginTop: 18 }}>
+                {renderInput("address", "Home Address *")}
+              </div>
+            </div>
+          )}
 
           <div style={s.divider} />
 
           {/* Section 2: Student */}
-          <p style={s.sectionLabel}>2. Student Information</p>
-          <div style={s.row3}>
-            {renderInput("studentName", "Student Name *")}
-            {renderInput("age", "Age *", { placeholder: "e.g. 10, 14" })}
-            {renderSelect("gender", "Gender *", ["Male", "Female"])}
-          </div>
-          <div style={{ ...s.row3, marginTop: 18 }}>
-            {renderInput("school", "School Name *")}
-            {renderInput("classGrade", "Class / Grade *")}
-            {renderSelect("cohort", "Cohort *", COHORTS)}
-          </div>
-          <div style={{ marginTop: 18 }}>
-            {renderSelect(
-              "hasLaptop",
-              "Does the student have a laptop? *",
-              ["Yes", "No — Pearl AI Labs will provide a computer"],
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => toggleSection(2)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[2]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>2. Student Information</p>
+              {sectionHasErrors(2) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[2] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[2] && (
+            <div style={{ marginTop: 14 }}>
+              <div style={s.row3}>
+                {renderInput("studentName", "Student Name *")}
+                {renderInput("age", "Age *", { placeholder: "e.g. 10, 14" })}
+                {renderSelect("gender", "Gender *", ["Male", "Female"])}
+              </div>
+              <div style={{ ...s.row3, marginTop: 18 }}>
+                {renderInput("school", "School Name *")}
+                {renderInput("classGrade", "Class / Grade *")}
+                {renderSelect("cohort", "Cohort *", COHORTS)}
+              </div>
+              <div style={{ marginTop: 18 }}>
+                {renderSelect(
+                  "hasLaptop",
+                  "Does the student have a laptop? *",
+                  ["Yes", "No — Pearl AI Labs will provide a computer"],
+                )}
+              </div>
+            </div>
+          )}
 
           <div style={s.divider} />
 
           {/* Section 3: Programme selection */}
-          <p style={s.sectionLabel}>3. Programme Selection</p>
-          <p style={s.sectionHint}>
-            Select one or more modules. Fee: UGX 500,000 per module, discounted
-            to UGX 450,000 per module when enrolling in two or more.
-          </p>
+          <button
+            type="button"
+            onClick={() => toggleSection(3)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[3]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>3. Programme Selection</p>
+              {sectionHasErrors(3) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[3] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[3] && (
+            <div style={{ marginTop: 14 }}>
+              <p style={s.sectionHint}>
+                Select one or more modules. Fee: UGX 500,000 per module, discounted
+                to UGX 450,000 per module when enrolling in two or more.
+              </p>
 
-          <label style={labelStyle}>Which module(s) would you like the student to join? *</label>
-          <div style={s.moduleGroup}>
-            {MODULE_NAMES.map((name) => (
-              <label key={name} style={s.moduleRow}>
-                <input
-                  type="checkbox"
-                  checked={form.modules.includes(name)}
-                  onChange={() => toggleModule(name)}
-                  style={s.checkbox}
-                />
-                <span>{name}</span>
-              </label>
-            ))}
-          </div>
-          {errors.modules && <p style={errorStyle}>{errors.modules}</p>}
+              <label style={labelStyle}>Which module(s) would you like the student to join? *</label>
+              <div style={s.moduleGroup}>
+                {MODULE_NAMES.map((name) => (
+                  <label key={name} style={s.moduleRow}>
+                    <input
+                      type="checkbox"
+                      checked={form.modules.includes(name)}
+                      onChange={() => toggleModule(name)}
+                      style={s.checkbox}
+                    />
+                    <span>{name}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.modules && <p style={errorStyle}>{errors.modules}</p>}
 
-          <div style={{ ...s.row2, marginTop: 18 }}>
-            {renderSelect("hearAbout", "How did you hear about us? *", HEAR_ABOUT_OPTIONS)}
-            {form.hearAbout === "Other" && renderInput("hearAboutOther", "Please specify *")}
-          </div>
+              <div style={{ ...s.row2, marginTop: 18 }}>
+                {renderSelect("hearAbout", "How did you hear about us? *", HEAR_ABOUT_OPTIONS)}
+                {form.hearAbout === "Other" && renderInput("hearAboutOther", "Please specify *")}
+              </div>
+            </div>
+          )}
 
           <div style={s.divider} />
 
           {/* Section 4: Payment */}
-          <p style={s.sectionLabel}>4. Payment</p>
-
-          <div style={{ ...s.row2, marginTop: 16 }}>
-            <div style={s.amountBox}>
-              <span style={s.amountLabel}>Amount Due</span>
-              <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+          <button
+            type="button"
+            onClick={() => toggleSection(4)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[4]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>4. Payment</p>
+              {sectionHasErrors(4) && <span style={s.sectionErrorBadge}>Incomplete</span>}
             </div>
-            <div>
-              <button
-                type="button"
-                onClick={copyMerchantCode}
-                style={s.merchantCodeBox}
-              >
-                <span style={s.merchantCodeLabel}>Merchant Code</span>
-                <span style={s.merchantCodeRight}>
-                  <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
-                  {codeCopied ? (
-                    <Check size={18} color={FORM_BLACK} />
-                  ) : (
-                    <Copy size={18} color={FORM_BLACK} />
-                  )}
-                </span>
-              </button>
-              {codeCopied && <p style={s.copiedHint}>Copied!</p>}
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[4] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[4] && (
+            <div style={{ marginTop: 14 }}>
+              <div style={s.row2}>
+                <div style={s.amountBox}>
+                  <span style={s.amountLabel}>Amount Due</span>
+                  <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={copyMerchantCode}
+                    style={s.merchantCodeBox}
+                  >
+                    <span style={s.merchantCodeLabel}>Merchant Code</span>
+                    <span style={s.merchantCodeRight}>
+                      <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
+                      {codeCopied ? (
+                        <Check size={18} color="#ffffff" />
+                      ) : (
+                        <Copy size={18} color="#ffffff" />
+                      )}
+                    </span>
+                  </button>
+                  {codeCopied && <p style={s.copiedHint}>Copied!</p>}
+                </div>
+              </div>
+
+              <p style={s.paymentInstructions}>
+                Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
+                select <strong>Pay Merchant / Pay Bill</strong>, then enter the
+                merchant code above, the amount above, and confirm with your MTN
+                MoMo PIN.
+              </p>
+
+              <p style={s.cashNote}>
+                <strong>Prefer to pay cash?</strong> You&apos;re welcome to pay in
+                person — on the first day of the bootcamp, or any time before
+                then during working hours, at Pearl Labs.
+              </p>
+
+              <div style={{ marginTop: 18 }}>
+                {renderInput("transactionId", "Transaction ID", {
+                  placeholder: "e.g. from your MTN MoMo confirmation SMS",
+                })}
+                <p style={s.fieldHint}>
+                  Don&apos;t have it yet? Leave this blank and submit — your
+                  details are saved, so you can come back and add it once
+                  you&apos;ve paid.
+                </p>
+              </div>
             </div>
-          </div>
-
-          <p style={s.paymentInstructions}>
-            Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
-            select <strong>Pay Merchant / Pay Bill</strong>, then enter the
-            merchant code above, the amount above, and confirm with your MTN
-            MoMo PIN.
-          </p>
-
-          <p style={s.cashNote}>
-            <strong>Prefer to pay cash?</strong> You&apos;re welcome to pay in
-            person — on the first day of the bootcamp, or any time before
-            then during working hours, at Pearl Labs.
-          </p>
-
-          <div style={{ marginTop: 18 }}>
-            {renderInput("transactionId", "Transaction ID", {
-              placeholder: "e.g. from your MTN MoMo confirmation SMS",
-            })}
-            <p style={s.fieldHint}>
-              Don&apos;t have it yet? Leave this blank and submit — your
-              details are saved, so you can come back and add it once
-              you&apos;ve paid.
-            </p>
-          </div>
+          )}
 
           <div style={s.divider} />
 
           {/* Section 5: Drop-off & pick-up */}
-          <p style={s.sectionLabel}>5. Drop-off &amp; Pick-up Service</p>
-          <p style={s.sectionHint}>
-            We offer drop-off and pick-up services for students attending the training.
-          </p>
-          <div style={s.row2}>
-            {renderSelect(
-              "pickupService",
-              "Use our drop-off and pick-up service? *",
-              ["Yes", "No"],
-            )}
-            {form.pickupService === "Yes" &&
-              renderInput("pickupLocation", "Pick-up Location *", {
-                placeholder: "Share your child's pick-up location",
-              })}
-          </div>
+          <button
+            type="button"
+            onClick={() => toggleSection(5)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[5]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>5. Drop-off &amp; Pick-up Service</p>
+              {sectionHasErrors(5) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[5] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[5] && (
+            <div style={{ marginTop: 14 }}>
+              <p style={s.sectionHint}>
+                We offer drop-off and pick-up services for students attending the training.
+              </p>
+              <div style={s.row2}>
+                {renderSelect(
+                  "pickupService",
+                  "Use our drop-off and pick-up service? *",
+                  ["Yes", "No"],
+                )}
+                {form.pickupService === "Yes" &&
+                  renderInput("pickupLocation", "Pick-up Location *", {
+                    placeholder: "Share your child's pick-up location",
+                  })}
+              </div>
+            </div>
+          )}
 
           <div style={s.divider} />
 
           {/* Section 6: Medical */}
-          <p style={s.sectionLabel}>6. Medical Information</p>
-          <div style={s.row2}>
-            {renderTextarea("medicalInfo", "Allergies, medical conditions, or special needs?")}
-            {renderTextarea("additionalInfo", "Anything else you'd like us to know?")}
-          </div>
+          <button
+            type="button"
+            onClick={() => toggleSection(6)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[6]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>6. Medical Information</p>
+              {sectionHasErrors(6) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[6] ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </button>
+          {openSections[6] && (
+            <div style={{ marginTop: 14 }}>
+              <div style={s.row2}>
+                {renderTextarea("medicalInfo", "Allergies, medical conditions, or special needs?")}
+                {renderTextarea("additionalInfo", "Anything else you'd like us to know?")}
+              </div>
+            </div>
+          )}
 
           <div style={s.divider} />
 
-          {/* Section 6: Consent */}
-          <p style={s.sectionLabel}>7. Consent &amp; Confirmation</p>
-
-          <label style={s.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={form.agreeTerms}
-              onChange={(e) => {
-                setForm(prev => ({ ...prev, agreeTerms: e.target.checked }));
-                if (errors.agreeTerms) setErrors(prev => ({ ...prev, agreeTerms: undefined }));
+          {/* Section 7: Consent */}
+          <button
+            type="button"
+            onClick={() => toggleSection(7)}
+            style={s.sectionHeaderBtn}
+            aria-expanded={openSections[7]}
+          >
+            <div style={s.sectionHeaderTitleWrap}>
+              <p style={s.sectionLabel}>7. Consent &amp; Confirmation</p>
+              {sectionHasErrors(7) && <span style={s.sectionErrorBadge}>Incomplete</span>}
+            </div>
+            <ChevronDown
+              size={18}
+              style={{
+                ...s.sectionChevron,
+                transform: openSections[7] ? "rotate(180deg)" : "rotate(0deg)",
               }}
-              style={s.checkbox}
             />
-            <span>
-              I confirm the information provided above is accurate and I agree to enrol
-              my child in the Pearl AI Labs Deep Tech Bootcamp. *
-            </span>
-          </label>
-          {errors.agreeTerms && <p style={errorStyle}>{errors.agreeTerms}</p>}
+          </button>
+          {openSections[7] && (
+            <div style={{ marginTop: 14 }}>
+              <label style={s.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={form.agreeTerms}
+                  onChange={(e) => {
+                    setForm(prev => ({ ...prev, agreeTerms: e.target.checked }));
+                    if (errors.agreeTerms) setErrors(prev => ({ ...prev, agreeTerms: undefined }));
+                  }}
+                  style={s.checkbox}
+                />
+                <span>
+                  I confirm the information provided above is accurate and I agree to enrol
+                  my child in the Pearl AI Labs Deep Tech Bootcamp. *
+                </span>
+              </label>
+              {errors.agreeTerms && <p style={errorStyle}>{errors.agreeTerms}</p>}
 
-          <div style={{ marginTop: 18 }}>
-            {renderSelect(
-              "photoConsent",
-              "I consent to my child being photographed / recorded during the programme for promotional use by Pearl AI Labs / Lwera Electronics & Semi-conductors. *",
-              ["Yes", "No"],
-            )}
-          </div>
+              <div style={{ marginTop: 18 }}>
+                {renderSelect(
+                  "photoConsent",
+                  "I consent to my child being photographed / recorded during the programme for promotional use by Pearl AI Labs / Lwera Electronics & Semi-conductors. *",
+                  ["Yes", "No"],
+                )}
+              </div>
 
-          <p style={s.paymentNote}>
-            Payment confirms your child&apos;s spot.
-            Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
-          </p>
+              <p style={s.paymentNote}>
+                Payment confirms your child&apos;s spot.
+                Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
+              </p>
+            </div>
+          )}
 
           {status === "error" && (
             <p style={s.submitErrorText}>{submitError}</p>
@@ -710,7 +918,7 @@ export default function InternshipApply() {
               cursor: status === "sending" ? "wait" : "pointer",
             }}
           >
-            {status === "sending" ? "Submitting…" : "Submit Registration →"}
+            {status === "sending" ? "Submitting Registration…" : "Submit Registration →"}
           </button>
         </div>
       </div>
@@ -755,7 +963,12 @@ const s: Record<string, React.CSSProperties> = {
   draftBannerLink: { background: "none", border: "none", color: FORM_BLACK, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
   savedBanner: { fontSize: 13, color: FORM_BLACK, lineHeight: 1.6, background: FORM_GREY, border: `1px solid ${FORM_BLACK}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
   divider: { height: 1, background: BORDER, margin: "24px 0" },
-  sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, marginBottom: 6 },
+  expandAllBtn: { background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: FORM_BLACK, cursor: "pointer" },
+  sectionHeaderBtn: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: "4px 0", cursor: "pointer", textAlign: "left" },
+  sectionHeaderTitleWrap: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  sectionLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, margin: 0 },
+  sectionErrorBadge: { fontSize: 10.5, fontWeight: 700, color: "#C0392B", background: "rgba(192, 57, 43, 0.08)", border: "1px solid rgba(192, 57, 43, 0.25)", padding: "2px 8px", borderRadius: 999, letterSpacing: "0.02em" },
+  sectionChevron: { transition: "transform 0.2s ease", color: FORM_BLACK, flexShrink: 0, marginLeft: 8 },
   sectionHint: { fontSize: 13, color: FORM_BLACK, marginBottom: 14, lineHeight: 1.6 },
   row2: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 18 },
   textareaCell: { display: "flex", flexDirection: "column" },
@@ -770,16 +983,16 @@ const s: Record<string, React.CSSProperties> = {
   amountLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
   amountValue: { fontSize: 20, fontWeight: 800, color: FORM_BLACK },
   paymentInstructions: { fontSize: 13.5, color: FORM_BLACK, lineHeight: 1.8, background: FORM_GREY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 16px", marginTop: 14 },
-  cashNote: { fontSize: 14, color: FORM_BLACK, lineHeight: 1.7, background: BUTTON_GREY, border: `1.5px solid ${FORM_BLACK}`, borderRadius: 8, padding: "14px 16px", marginTop: 12 },
-  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: BUTTON_GREY, border: `1.5px solid ${FORM_BLACK}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit" },
-  merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: FORM_BLACK, fontWeight: 700 },
+  cashNote: { fontSize: 14, color: "#fff", lineHeight: 1.7, background: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 8, padding: "14px 16px", marginTop: 12 },
+  merchantCodeBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 10, padding: "14px 20px", width: "100%", height: "100%", cursor: "pointer", font: "inherit", color: "#fff" },
+  merchantCodeLabel: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", fontWeight: 700 },
   merchantCodeRight: { display: "flex", alignItems: "center", gap: 10 },
-  merchantCodeValue: { fontSize: 22, fontWeight: 800, color: FORM_BLACK, letterSpacing: "0.08em", fontFamily: "monospace" },
-  copiedHint: { fontSize: 12, color: FORM_BLACK, fontWeight: 600, marginTop: 6, textAlign: "right" },
+  merchantCodeValue: { fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: "0.08em", fontFamily: "monospace" },
+  copiedHint: { fontSize: 12, color: ORANGE, fontWeight: 600, marginTop: 6, textAlign: "right" },
   fieldHint: { fontSize: 11.5, color: FORM_BLACK, marginTop: 6, lineHeight: 1.6 },
   paymentNote: { fontSize: 12.5, color: FORM_BLACK, lineHeight: 1.7, marginTop: 28, padding: "14px 16px", background: FORM_GREY, borderRadius: 8, border: `1px solid ${BORDER}` },
   submitErrorText: { fontSize: 13, fontWeight: 600, color: FORM_BLACK, marginTop: 16 },
-  submitBtn: { width: "100%", marginTop: 20, padding: "15px", background: BUTTON_GREY, color: FORM_BLACK, fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", border: `1.5px solid ${FORM_BLACK}`, borderRadius: 8, textAlign: "center" },
+  submitBtn: { width: "100%", marginTop: 24, padding: "18px 24px", background: "#FFF2E5", color: ORANGE, fontSize: 16, fontWeight: 800, letterSpacing: "0.02em", border: `2.5px solid ${ORANGE}`, borderRadius: 10, textAlign: "center", boxShadow: "0 4px 16px rgba(239, 134, 51, 0.18)", cursor: "pointer" },
   successWrap: { maxWidth: 480, margin: "0 auto", padding: "120px 32px", textAlign: "center" },
   successIcon: { width: 64, height: 64, borderRadius: "50%", background: "#E9F6EE", color: "#1E7B45", fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" },
   successTitle: { fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 14 },
