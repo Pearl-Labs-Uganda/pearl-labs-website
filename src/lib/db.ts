@@ -43,6 +43,20 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   type TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS incomplete_registrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT UNIQUE NOT NULL,
+  phone TEXT NOT NULL,
+  parent_name TEXT,
+  student_name TEXT,
+  email TEXT,
+  modules TEXT,
+  amount_due INTEGER,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  submitted INTEGER NOT NULL DEFAULT 0
+);
 `;
 
 export function getDb(): Database.Database {

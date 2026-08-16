@@ -3,7 +3,9 @@
 import { useState } from "react";
 import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
+import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
+import { Phone, MessageSquare, Trash2, Copy, Check } from "lucide-react";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -13,19 +15,26 @@ const CREAM = "#F4FAFF";
 interface Props {
   registrations: RegistrationRow[];
   eventCounts: EventCounts;
+  incompleteLeads: IncompleteLeadRow[];
   onMarkVerified: (id: number) => Promise<void>;
+  onDeleteLead: (id: number) => Promise<void>;
 }
 
 function TabBar({
   active,
   onChange,
+  leadsCount,
+  registrationsCount,
 }: {
-  active: "analytics" | "registrations";
-  onChange: (tab: "analytics" | "registrations") => void;
+  active: "analytics" | "registrations" | "leads";
+  onChange: (tab: "analytics" | "registrations" | "leads") => void;
+  leadsCount: number;
+  registrationsCount: number;
 }) {
-  const tabs: { id: "analytics" | "registrations"; label: string }[] = [
+  const tabs: { id: "analytics" | "registrations" | "leads"; label: string }[] = [
     { id: "analytics", label: "Analytics" },
-    { id: "registrations", label: "Registrations" },
+    { id: "registrations", label: `Registrations (${registrationsCount})` },
+    { id: "leads", label: `Incomplete Leads (${leadsCount})` },
   ];
   return (
     <div style={{ display: "flex", gap: 8, borderBottom: `1px solid ${BORDER}`, marginBottom: 24 }}>
@@ -61,9 +70,6 @@ function pct(part: number, whole: number): string {
   return whole > 0 ? `${Math.round((part / whole) * 100)}%` : "—";
 }
 
-// An unqualified toLocaleString() formats using the running process's default
-// locale — different on the Node server than in the visitor's browser, which
-// produces mismatched text on the same render and trips a hydration error.
 // Pinning an explicit locale + format keeps server and client output identical.
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("en-GB", {
@@ -164,6 +170,162 @@ function Row({
   );
 }
 
+function LeadRowCard({
+  lead,
+  onDelete,
+}: {
+  lead: IncompleteLeadRow;
+  onDelete: (id: number) => Promise<void>;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const copyPhone = () => {
+    navigator.clipboard.writeText(lead.phone).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete incomplete lead for ${lead.phone}?`)) return;
+    setDeleting(true);
+    await onDelete(lead.id);
+    setDeleting(false);
+  };
+
+  const cleanDigits = lead.phone.replace(/[^0-9]/g, "");
+  // If phone begins with 0, format for international Uganda format 256
+  const waNumber = cleanDigits.startsWith("0")
+    ? "256" + cleanDigits.slice(1)
+    : cleanDigits.startsWith("256")
+    ? cleanDigits
+    : cleanDigits;
+
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: `1px solid ${BORDER}`,
+        borderRadius: 12,
+        padding: "18px 20px",
+        marginBottom: 12,
+        boxShadow: "0 2px 10px rgba(0,45,91,0.03)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 17, fontWeight: 800, color: GREEN, letterSpacing: "0.02em" }}>
+              {lead.phone}
+            </span>
+            <button
+              type="button"
+              onClick={copyPhone}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                background: CREAM,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 6,
+                padding: "3px 8px",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#4C616C",
+                cursor: "pointer",
+              }}
+            >
+              {copied ? <Check size={12} color="#1E7B45" /> : <Copy size={12} />}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: "#111D23", marginTop: 4 }}>
+            {lead.parentName ? lead.parentName : <span style={{ color: "#8C9BA5", fontStyle: "italic" }}>Parent name not filled</span>}
+            {lead.studentName && <span style={{ color: "#4C616C" }}> · Student: {lead.studentName}</span>}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <a
+            href={`tel:${lead.phone}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 12px",
+              background: GREEN,
+              color: "#fff",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            <Phone size={13} />
+            Call
+          </a>
+          <a
+            href={`https://wa.me/${waNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 12px",
+              background: "#25D366",
+              color: "#fff",
+              borderRadius: 6,
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            <MessageSquare size={13} />
+            WhatsApp
+          </a>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            title="Dismiss / Delete Lead"
+            style={{
+              padding: "7px 10px",
+              background: "#FCEBEB",
+              color: "#C0392B",
+              border: "1px solid rgba(192,57,43,0.2)",
+              borderRadius: 6,
+              fontSize: 12,
+              cursor: deleting ? "wait" : "pointer",
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", fontSize: 12, color: "#4C616C", borderTop: `1px solid ${BORDER}`, paddingTop: 10 }}>
+        {lead.email && <span><strong>Email:</strong> {lead.email}</span>}
+        {lead.modules.length > 0 ? (
+          <span>
+            <strong>Modules:</strong> {lead.modules.join(", ")}{" "}
+            <span style={{ color: ORANGE, fontWeight: 700 }}>({formatUgx(lead.amountDue)})</span>
+          </span>
+        ) : (
+          <span style={{ fontStyle: "italic", color: "#8C9BA5" }}>No modules chosen yet</span>
+        )}
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "#8C9BA5" }}>
+          Last active: {formatDateTime(lead.updatedAt)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function StatTile({
   label,
   value,
@@ -182,8 +344,6 @@ function StatTile({
   );
 }
 
-// Single-hue magnitude bars (demand, not identity) — one accent color, no legend needed.
-// Value is direct-labeled at the bar end, so every reading is visible without hover.
 function BarBreakdown({
   title,
   items,
@@ -257,8 +417,14 @@ function Section({
 // caps at 30 students total, not per cohort.
 const TOTAL_SPOTS = 30;
 
-export default function RegistrationsDashboard({ registrations, eventCounts, onMarkVerified }: Props) {
-  const [view, setView] = useState<"analytics" | "registrations">("analytics");
+export default function RegistrationsDashboard({
+  registrations,
+  eventCounts,
+  incompleteLeads,
+  onMarkVerified,
+  onDeleteLead,
+}: Props) {
+  const [view, setView] = useState<"analytics" | "registrations" | "leads">("analytics");
   const unpaid = registrations.filter((r) => !r.transactionId);
   const awaiting = registrations.filter((r) => r.transactionId && !r.verified);
   const verified = registrations.filter((r) => r.transactionId && r.verified);
@@ -300,16 +466,19 @@ export default function RegistrationsDashboard({ registrations, eventCounts, onM
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
       <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 24 }}>
-        Bootcamp Registrations
+        Bootcamp Registrations &amp; Analytics
       </h1>
 
-      <TabBar active={view} onChange={setView} />
+      <TabBar
+        active={view}
+        onChange={setView}
+        leadsCount={incompleteLeads.length}
+        registrationsCount={registrations.length}
+      />
 
       {view === "analytics" ? (
         <>
-          {/* Earliest funnel stage — counted server-side in our own DB (see
-              src/lib/analyticsEvents.ts) so it's visible here without GA4 API
-              credentials. Excludes anyone who's opted out via ?nostats=1. */}
+          {/* Earliest funnel stage — counted server-side in our own DB */}
           <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4C616C", marginBottom: 10 }}>
             Apply Page Funnel
           </h2>
@@ -321,6 +490,11 @@ export default function RegistrationsDashboard({ registrations, eventCounts, onM
               caption={`${pct(eventCounts.formStarted, eventCounts.applyView)} of visits`}
             />
             <StatTile
+              label="MoMo code copied"
+              value={eventCounts.momoCodeCopied}
+              caption={`${pct(eventCounts.momoCodeCopied, eventCounts.applyView)} of visits`}
+            />
+            <StatTile
               label="Submitted the form"
               value={eventCounts.formSubmitted}
               caption={`${pct(eventCounts.formSubmitted, eventCounts.formStarted)} of starts`}
@@ -328,11 +502,12 @@ export default function RegistrationsDashboard({ registrations, eventCounts, onM
           </div>
 
           <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4C616C", marginBottom: 10 }}>
-            Registration Stats
+            Registration &amp; Lead Stats
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
             <StatTile label="Total registrations" value={registrations.length} />
             <StatTile label="Verified" value={verified.length} />
+            <StatTile label="Incomplete leads" value={incompleteLeads.length} caption="Phone entered, unsubmitted" />
             <StatTile label="Conversion rate" value={`${conversionRate}%`} />
             <StatTile label="Need a laptop provided" value={laptopProvisionCount} />
           </div>
@@ -356,7 +531,7 @@ export default function RegistrationsDashboard({ registrations, eventCounts, onM
             <BarBreakdown title="How they heard about us" items={channelBreakdown} />
           </div>
         </>
-      ) : (
+      ) : view === "registrations" ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
           <Section
             title="Unpaid"
@@ -379,6 +554,35 @@ export default function RegistrationsDashboard({ registrations, eventCounts, onM
             onMarkVerified={onMarkVerified}
             emptyText="No verified registrations yet."
           />
+        </div>
+      ) : (
+        <div>
+          <div style={{ marginBottom: 18 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: GREEN, marginBottom: 4 }}>
+              Started but Unfinished Forms
+            </h2>
+            <p style={{ fontSize: 13, color: "#4C616C", lineHeight: 1.6, maxWidth: 680 }}>
+              These parents typed in their phone number on the registration form but left without submitting.
+              You can contact them directly via call or WhatsApp to assist with questions or help them complete payment.
+            </p>
+          </div>
+
+          {incompleteLeads.length === 0 ? (
+            <div style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "36px 24px", textAlign: "center" }}>
+              <p style={{ fontSize: 14, color: "#4C616C", fontWeight: 600 }}>
+                No incomplete leads captured yet.
+              </p>
+              <p style={{ fontSize: 12.5, color: "#8C9BA5", marginTop: 4 }}>
+                When visitors enter a phone number on /apply without submitting, they will appear here automatically.
+              </p>
+            </div>
+          ) : (
+            <div>
+              {incompleteLeads.map((lead) => (
+                <LeadRowCard key={lead.id} lead={lead} onDelete={onDeleteLead} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

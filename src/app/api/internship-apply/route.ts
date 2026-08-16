@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { formatUgx } from "@/lib/fee";
 import { saveRegistration, type RegistrationInput } from "@/lib/registrations";
+import { markLeadSubmitted } from "@/lib/leads";
 
 interface RegistrationPayload extends RegistrationInput {
   id?: number;
+  sessionId?: string;
 }
 
 const requiredFields: Array<keyof RegistrationInput> = [
@@ -138,6 +140,10 @@ export async function POST(request: Request) {
       },
       reg.id,
     );
+
+    if (reg.sessionId) {
+      markLeadSubmitted(reg.sessionId);
+    }
 
     if (!shouldSendEmail) {
       return NextResponse.json({ ok: true, id: row.id });

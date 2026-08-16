@@ -9,6 +9,7 @@ import { trackEvent } from "@/lib/analytics";
 const MERCHANT_CODE = "07778381";
 
 const DRAFT_KEY = "pearlLabsBootcampDraft";
+const LEAD_SESSION_KEY = "pearlLabsLeadSessionId";
 
 // ── Brand tokens (Pearl Labs) ─────────────────────────────────
 const GREEN      = "#002D5B";
@@ -111,16 +112,17 @@ export default function InternshipApply() {
   const [focused, setFocused] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
-    1: true,
-    2: true,
-    3: true,
-    4: true,
-    5: true,
-    6: true,
-    7: true,
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
+    6: false,
+    7: false,
   });
   const loadedDraft = useRef(false);
   const formStarted = useRef(false);
+  const sessionId = useRef<string>("");
 
   const toggleSection = (id: number) => {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
@@ -168,9 +170,16 @@ export default function InternshipApply() {
     trackEvent("apply_view");
   }, []);
 
-  // ── Load any saved draft on mount ────────────────────────────
+  // ── Load any saved draft & session ID on mount ────────────────
   useEffect(() => {
     try {
+      let sid = window.localStorage.getItem(LEAD_SESSION_KEY);
+      if (!sid) {
+        sid = "lead_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9);
+        window.localStorage.setItem(LEAD_SESSION_KEY, sid);
+      }
+      sessionId.current = sid;
+
       const raw = window.localStorage.getItem(DRAFT_KEY);
       if (raw) {
         const draft = JSON.parse(raw) as Draft;
@@ -178,7 +187,7 @@ export default function InternshipApply() {
         setRegistrationId(draft.registrationId ?? null);
       }
     } catch {
-      // Ignore a corrupted or inaccessible draft — start fresh.
+      sessionId.current = "lead_" + Date.now().toString(36);
     } finally {
       loadedDraft.current = true;
     }
@@ -190,6 +199,30 @@ export default function InternshipApply() {
     const draft: Draft = { form, registrationId };
     window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   }, [form, registrationId]);
+
+  // ── Auto-sync partial lead when phone number is entered ──────
+  useEffect(() => {
+    if (!loadedDraft.current || !form.phone.trim() || form.phone.trim().length < 5) return;
+    if (status === "sent") return;
+
+    const timer = setTimeout(() => {
+      fetch("/api/internship-apply/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: sessionId.current,
+          phone: form.phone,
+          parentName: form.parentName,
+          studentName: form.studentName,
+          email: form.email,
+          modules: form.modules,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [form.phone, form.parentName, form.studentName, form.email, form.modules, status]);
 
   // ── Validation ──────────────────────────────────────────────
   const validate = (): FieldErrors => {
@@ -232,6 +265,7 @@ export default function InternshipApply() {
     };
 
   const copyMerchantCode = () => {
+    trackEvent("momo_code_copied");
     navigator.clipboard.writeText(MERCHANT_CODE).then(() => {
       setCodeCopied(true);
       setTimeout(() => setCodeCopied(false), 2000);
@@ -250,6 +284,10 @@ export default function InternshipApply() {
 
   const startNewRegistration = () => {
     window.localStorage.removeItem(DRAFT_KEY);
+    window.localStorage.removeItem(LEAD_SESSION_KEY);
+    const newSid = "lead_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9);
+    sessionId.current = newSid;
+    try { window.localStorage.setItem(LEAD_SESSION_KEY, newSid); } catch {}
     setForm(INITIAL);
     setRegistrationId(null);
     setErrors({});
@@ -284,7 +322,11 @@ export default function InternshipApply() {
       const response = await fetch("/api/internship-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, id: registrationId ?? undefined }),
+        body: JSON.stringify({
+          ...form,
+          id: registrationId ?? undefined,
+          sessionId: sessionId.current || undefined,
+        }),
       });
 
       if (!response.ok) {

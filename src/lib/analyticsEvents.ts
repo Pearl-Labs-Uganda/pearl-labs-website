@@ -1,13 +1,19 @@
 import { getDb } from "./db";
 
 // Kept in sync with the event names InternshipApply.tsx sends via trackEvent().
-export const EVENT_TYPES = ["apply_view", "form_started", "form_submitted"] as const;
+export const EVENT_TYPES = [
+  "apply_view",
+  "form_started",
+  "form_submitted",
+  "momo_code_copied",
+] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export interface EventCounts {
   applyView: number;
   formStarted: number;
   formSubmitted: number;
+  momoCodeCopied: number;
 }
 
 export function recordEvent(type: EventType): void {
@@ -24,11 +30,17 @@ export function getEventCounts(): EventCounts {
     .prepare("SELECT type, COUNT(*) as count FROM analytics_events GROUP BY type")
     .all() as { type: string; count: number }[];
 
-  const counts: EventCounts = { applyView: 0, formStarted: 0, formSubmitted: 0 };
+  const counts: EventCounts = {
+    applyView: 0,
+    formStarted: 0,
+    formSubmitted: 0,
+    momoCodeCopied: 0,
+  };
   for (const row of rows) {
     if (row.type === "apply_view") counts.applyView = row.count;
     else if (row.type === "form_started") counts.formStarted = row.count;
     else if (row.type === "form_submitted") counts.formSubmitted = row.count;
+    else if (row.type === "momo_code_copied") counts.momoCodeCopied = row.count;
   }
   return counts;
 }
