@@ -226,11 +226,13 @@ export function markLeadSubmitted(sessionId: string): void {
 
 export function listIncompleteLeads(): IncompleteLeadRow[] {
   const db = getDb();
-  // Filter out any lead already submitted or whose phone number is now in completed registrations
+  // Filter out any lead already submitted, dismissed by staff, or whose
+  // phone number is now in completed registrations
   const rows = db
     .prepare(
       `SELECT * FROM incomplete_registrations
        WHERE submitted = 0
+         AND dismissed = 0
          AND phone != ''
          AND phone NOT IN (SELECT phone FROM registrations WHERE phone != '')
        ORDER BY updated_at DESC`,
@@ -240,7 +242,29 @@ export function listIncompleteLeads(): IncompleteLeadRow[] {
   return rows.map(rowFromDb);
 }
 
+export function listDismissedLeads(): IncompleteLeadRow[] {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `SELECT * FROM incomplete_registrations
+       WHERE dismissed = 1 AND submitted = 0
+       ORDER BY updated_at DESC`,
+    )
+    .all();
+
+  return rows.map(rowFromDb);
+}
+
+// Soft delete — staff dismissing a lead from the dashboard shouldn't
+// permanently destroy a real person's data on a misclick. The row stays in
+// the DB (recoverable by flipping dismissed back to 0) but is filtered out
+// of listIncompleteLeads() above.
 export function deleteLead(id: number): void {
   const db = getDb();
-  db.prepare("DELETE FROM incomplete_registrations WHERE id = ?").run(id);
+  db.prepare("UPDATE incomplete_registrations SET dismissed = 1 WHERE id = ?").run(id);
+}
+
+export function restoreLead(id: number): void {
+  const db = getDb();
+  db.prepare("UPDATE incomplete_registrations SET dismissed = 0 WHERE id = ?").run(id);
 }

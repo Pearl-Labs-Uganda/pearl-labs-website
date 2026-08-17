@@ -81,6 +81,7 @@ const INCOMPLETE_LEAD_MIGRATION_COLUMNS: Record<string, string> = {
   additional_info: "TEXT",
   agree_terms: "INTEGER",
   photo_consent: "TEXT",
+  dismissed: "INTEGER NOT NULL DEFAULT 0",
 };
 
 // Payment method wasn't captured before — parents just had MoMo instructions

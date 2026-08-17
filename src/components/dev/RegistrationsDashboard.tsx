@@ -5,7 +5,7 @@ import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
-import { Phone, MessageSquare, Trash2, Copy, Check } from "lucide-react";
+import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw } from "lucide-react";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -16,8 +16,10 @@ interface Props {
   registrations: RegistrationRow[];
   eventCounts: EventCounts;
   incompleteLeads: IncompleteLeadRow[];
+  dismissedLeads: IncompleteLeadRow[];
   onMarkVerified: (id: number) => Promise<void>;
   onDeleteLead: (id: number) => Promise<void>;
+  onRestoreLead: (id: number) => Promise<void>;
 }
 
 function TabBar({
@@ -180,13 +182,18 @@ function Row({
 
 function LeadRowCard({
   lead,
+  dismissed = false,
   onDelete,
+  onRestore,
 }: {
   lead: IncompleteLeadRow;
-  onDelete: (id: number) => Promise<void>;
+  dismissed?: boolean;
+  onDelete?: (id: number) => Promise<void>;
+  onRestore?: (id: number) => Promise<void>;
 }) {
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const copyPhone = () => {
     navigator.clipboard.writeText(lead.phone).then(() => {
@@ -196,10 +203,18 @@ function LeadRowCard({
   };
 
   const handleDelete = async () => {
+    if (!onDelete) return;
     if (!confirm(`Delete incomplete lead for ${lead.phone}?`)) return;
     setDeleting(true);
     await onDelete(lead.id);
     setDeleting(false);
+  };
+
+  const handleRestore = async () => {
+    if (!onRestore) return;
+    setRestoring(true);
+    await onRestore(lead.id);
+    setRestoring(false);
   };
 
   const cleanDigits = lead.phone.replace(/[^0-9]/g, "");
@@ -296,23 +311,48 @@ function LeadRowCard({
             <MessageSquare size={13} />
             WhatsApp
           </a>
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting}
-            title="Dismiss / Delete Lead"
-            style={{
-              padding: "7px 10px",
-              background: "#FCEBEB",
-              color: "#C0392B",
-              border: "1px solid rgba(192,57,43,0.2)",
-              borderRadius: 6,
-              fontSize: 12,
-              cursor: deleting ? "wait" : "pointer",
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
+          {dismissed ? (
+            <button
+              type="button"
+              onClick={handleRestore}
+              disabled={restoring}
+              title="Restore Lead"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 12px",
+                background: CREAM,
+                color: GREEN,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: restoring ? "wait" : "pointer",
+              }}
+            >
+              <RotateCcw size={13} />
+              {restoring ? "Restoring…" : "Restore"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              title="Dismiss / Delete Lead"
+              style={{
+                padding: "7px 10px",
+                background: "#FCEBEB",
+                color: "#C0392B",
+                border: "1px solid rgba(192,57,43,0.2)",
+                borderRadius: 6,
+                fontSize: 12,
+                cursor: deleting ? "wait" : "pointer",
+              }}
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -429,10 +469,13 @@ export default function RegistrationsDashboard({
   registrations,
   eventCounts,
   incompleteLeads,
+  dismissedLeads,
   onMarkVerified,
   onDeleteLead,
+  onRestoreLead,
 }: Props) {
   const [view, setView] = useState<"analytics" | "registrations" | "leads">("analytics");
+  const [showDismissed, setShowDismissed] = useState(false);
   // Rows saved before payment_method existed have "" — treat those as MoMo,
   // since MoMo was the only option at the time.
   const isCash = (r: RegistrationRow) => r.paymentMethod === "Cash";
@@ -613,6 +656,35 @@ export default function RegistrationsDashboard({
               {incompleteLeads.map((lead) => (
                 <LeadRowCard key={lead.id} lead={lead} onDelete={onDeleteLead} />
               ))}
+            </div>
+          )}
+
+          {dismissedLeads.length > 0 && (
+            <div style={{ marginTop: 28 }}>
+              <button
+                type="button"
+                onClick={() => setShowDismissed((v) => !v)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  color: "#4C616C",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                {showDismissed ? "Hide" : "Show"} dismissed leads ({dismissedLeads.length})
+              </button>
+
+              {showDismissed && (
+                <div style={{ marginTop: 14 }}>
+                  {dismissedLeads.map((lead) => (
+                    <LeadRowCard key={lead.id} lead={lead} dismissed onRestore={onRestoreLead} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
