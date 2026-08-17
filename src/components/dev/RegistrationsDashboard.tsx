@@ -5,7 +5,7 @@ import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
-import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw } from "lucide-react";
+import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown } from "lucide-react";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -194,6 +194,7 @@ function LeadRowCard({
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const copyPhone = () => {
     navigator.clipboard.writeText(lead.phone).then(() => {
@@ -356,7 +357,26 @@ function LeadRowCard({
         </div>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px", fontSize: 12, color: "#4C616C", borderTop: `1px solid ${BORDER}`, paddingTop: 10 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "8px 20px",
+          fontSize: 12,
+          color: "#4C616C",
+          background: "none",
+          border: "none",
+          borderTop: `1px solid ${BORDER}`,
+          paddingTop: 10,
+          width: "100%",
+          textAlign: "left",
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
         {lead.email && <span><strong>Email:</strong> {lead.email}</span>}
         {lead.modules.length > 0 ? (
           <span>
@@ -366,10 +386,34 @@ function LeadRowCard({
         ) : (
           <span style={{ fontStyle: "italic", color: "#8C9BA5" }}>No modules chosen yet</span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "#8C9BA5" }}>
+        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8C9BA5" }}>
           Last active: {formatDateTime(lead.updatedAt)}
+          <ChevronDown
+            size={14}
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+          />
         </span>
-      </div>
+      </button>
+
+      {open && (
+        <div style={{ fontSize: 12.5, lineHeight: 1.8, color: "#111D23", background: CREAM, borderRadius: 8, padding: "12px 14px" }}>
+          <p><strong>Relationship:</strong> {lead.relationship || "Not provided"}</p>
+          <p><strong>Profession:</strong> {lead.profession || "Not provided"}</p>
+          <p><strong>Alt phone:</strong> {lead.altPhone || "Not provided"}</p>
+          <p><strong>Address:</strong> {lead.address || "Not provided"}</p>
+          <p><strong>Student age / gender:</strong> {lead.age || "?"} / {lead.gender || "Not provided"}</p>
+          <p><strong>School / Class:</strong> {lead.school || "Not provided"} / {lead.classGrade || "Not provided"}</p>
+          <p><strong>Cohort:</strong> {lead.cohort || "Not provided"}</p>
+          <p><strong>Has laptop:</strong> {lead.hasLaptop || "Not provided"}</p>
+          <p><strong>Heard about us:</strong> {lead.hearAbout || "Not provided"}{lead.hearAboutOther ? ` (${lead.hearAboutOther})` : ""}</p>
+          <p><strong>Transaction ID:</strong> {lead.transactionId || "Not provided"}</p>
+          <p><strong>Pick-up service:</strong> {lead.pickupService || "Not provided"}{lead.pickupLocation ? ` — ${lead.pickupLocation}` : ""}</p>
+          <p><strong>Medical info:</strong> {lead.medicalInfo || "Not provided"}</p>
+          <p><strong>Additional info:</strong> {lead.additionalInfo || "Not provided"}</p>
+          <p><strong>Photo consent:</strong> {lead.photoConsent || "Not provided"}</p>
+          <p><strong>Agreed to enrol:</strong> {lead.agreeTerms ? "Yes" : "No"}</p>
+        </div>
+      )}
     </div>
   );
 }
