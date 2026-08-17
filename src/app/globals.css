@@ -203,3 +203,76 @@ body {
 .badge-dot {
   animation: pulse 2s infinite;
 }
+
+/* Gallery photos: grayscale until hovered/focused, like a print developing */
+.gallery-frame:hover img,
+.gallery-frame:focus-visible img {
+  filter: grayscale(0);
+  transform: scale(1.04);
+}
+
+/* ── Portfolio: lab-notebook / blueprint theme ─────────────────── */
+
+/* Faint graph-paper grid, used as the page background */
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(0, 45, 91, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 45, 91, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Instrument-viewport corner brackets, reused on gallery frames + lightbox */
+.viewport-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--color-primary);
+  opacity: 0.45;
+  transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.35s ease;
+}
+.viewport-corner-tl { top: 8px; left: 8px; border-top: 2px solid; border-left: 2px solid; }
+.viewport-corner-tr { top: 8px; right: 8px; border-top: 2px solid; border-right: 2px solid; }
+.viewport-corner-bl { bottom: 8px; left: 8px; border-bottom: 2px solid; border-left: 2px solid; }
+.viewport-corner-br { bottom: 8px; right: 8px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.gallery-frame:hover .viewport-corner,
+.gallery-frame:focus-visible .viewport-corner {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+.gallery-frame:hover .viewport-corner-tl,
+.gallery-frame:focus-visible .viewport-corner-tl { transform: translate(-3px, -3px); }
+.gallery-frame:hover .viewport-corner-tr,
+.gallery-frame:focus-visible .viewport-corner-tr { transform: translate(3px, -3px); }
+.gallery-frame:hover .viewport-corner-bl,
+.gallery-frame:focus-visible .viewport-corner-bl { transform: translate(-3px, 3px); }
+.gallery-frame:hover .viewport-corner-br,
+.gallery-frame:focus-visible .viewport-corner-br { transform: translate(3px, 3px); }
+
+/* Lightbox: overlay fade + image swap-in */
+@keyframes lightboxOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lightboxImageIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.lightbox-overlay { animation: lightboxOverlayIn 0.2s ease; }
+.lightbox-image { animation: lightboxImageIn 0.28s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .gallery-frame,
+  .gallery-frame img,
+  .viewport-corner,
+  .lightbox-overlay,
+  .lightbox-image {
+    animation: none !important;
+    transition: none !important;
+  }
+}
