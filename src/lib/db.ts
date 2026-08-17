@@ -59,6 +59,43 @@ CREATE TABLE IF NOT EXISTS incomplete_registrations (
 );
 `;
 
+// Columns added after incomplete_registrations already existed in production —
+// CREATE TABLE IF NOT EXISTS won't retrofit these, so add any that are missing.
+const INCOMPLETE_LEAD_MIGRATION_COLUMNS: Record<string, string> = {
+  relationship: "TEXT",
+  profession: "TEXT",
+  alt_phone: "TEXT",
+  address: "TEXT",
+  age: "TEXT",
+  gender: "TEXT",
+  school: "TEXT",
+  class_grade: "TEXT",
+  cohort: "TEXT",
+  has_laptop: "TEXT",
+  hear_about: "TEXT",
+  hear_about_other: "TEXT",
+  transaction_id: "TEXT",
+  pickup_service: "TEXT",
+  pickup_location: "TEXT",
+  medical_info: "TEXT",
+  additional_info: "TEXT",
+  agree_terms: "INTEGER",
+  photo_consent: "TEXT",
+};
+
+function migrateIncompleteRegistrations(db: Database.Database): void {
+  const existingColumns = new Set(
+    (db.prepare("PRAGMA table_info(incomplete_registrations)").all() as { name: string }[]).map(
+      (c) => c.name,
+    ),
+  );
+  for (const [column, type] of Object.entries(INCOMPLETE_LEAD_MIGRATION_COLUMNS)) {
+    if (!existingColumns.has(column)) {
+      db.exec(`ALTER TABLE incomplete_registrations ADD COLUMN ${column} ${type}`);
+    }
+  }
+}
+
 export function getDb(): Database.Database {
   if (instance) return instance;
 
@@ -71,6 +108,7 @@ export function getDb(): Database.Database {
   instance = new Database(dbPath);
   instance.pragma("journal_mode = WAL");
   instance.exec(SCHEMA);
+  migrateIncompleteRegistrations(instance);
   return instance;
 }
 

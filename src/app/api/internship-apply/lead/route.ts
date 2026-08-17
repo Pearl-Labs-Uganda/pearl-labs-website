@@ -16,11 +16,9 @@ export async function POST(request: Request) {
     }
 
     const lead = saveIncompleteLead({
+      ...body,
       sessionId: body.sessionId,
       phone: body.phone,
-      parentName: body.parentName,
-      studentName: body.studentName,
-      email: body.email,
       modules: Array.isArray(body.modules) ? body.modules : [],
     });
 

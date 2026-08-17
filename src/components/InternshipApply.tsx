@@ -202,7 +202,7 @@ export default function InternshipApply() {
 
   // ── Auto-sync partial lead when phone number is entered ──────
   useEffect(() => {
-    if (!loadedDraft.current || !form.phone.trim() || form.phone.trim().length < 5) return;
+    if (!loadedDraft.current || form.phone.replace(/\D/g, "").length < 10) return;
     if (status === "sent") return;
 
     const timer = setTimeout(() => {
@@ -211,18 +211,14 @@ export default function InternshipApply() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: sessionId.current,
-          phone: form.phone,
-          parentName: form.parentName,
-          studentName: form.studentName,
-          email: form.email,
-          modules: form.modules,
+          ...form,
         }),
         keepalive: true,
       }).catch(() => {});
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [form.phone, form.parentName, form.studentName, form.email, form.modules, status]);
+  }, [form, status]);
 
   // ── Validation ──────────────────────────────────────────────
   const validate = (): FieldErrors => {
