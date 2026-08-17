@@ -5,7 +5,7 @@ import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
-import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown } from "lucide-react";
+import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown, Link2, UserCheck } from "lucide-react";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -20,6 +20,8 @@ interface Props {
   onMarkVerified: (id: number) => Promise<void>;
   onDeleteLead: (id: number) => Promise<void>;
   onRestoreLead: (id: number) => Promise<void>;
+  onSetContacted: (id: number, contacted: boolean) => Promise<void>;
+  onGenerateResumeLink: (id: number) => Promise<string | null>;
 }
 
 function TabBar({
@@ -185,16 +187,22 @@ function LeadRowCard({
   dismissed = false,
   onDelete,
   onRestore,
+  onSetContacted,
+  onGenerateResumeLink,
 }: {
   lead: IncompleteLeadRow;
   dismissed?: boolean;
   onDelete?: (id: number) => Promise<void>;
   onRestore?: (id: number) => Promise<void>;
+  onSetContacted?: (id: number, contacted: boolean) => Promise<void>;
+  onGenerateResumeLink?: (id: number) => Promise<string | null>;
 }) {
   const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [open, setOpen] = useState(false);
+  const [togglingContacted, setTogglingContacted] = useState(false);
+  const [linkState, setLinkState] = useState<"idle" | "generating" | "copied" | "error">("idle");
 
   const copyPhone = () => {
     navigator.clipboard.writeText(lead.phone).then(() => {
@@ -216,6 +224,27 @@ function LeadRowCard({
     setRestoring(true);
     await onRestore(lead.id);
     setRestoring(false);
+  };
+
+  const handleToggleContacted = async () => {
+    if (!onSetContacted) return;
+    setTogglingContacted(true);
+    await onSetContacted(lead.id, !lead.contacted);
+    setTogglingContacted(false);
+  };
+
+  const handleGenerateResumeLink = async () => {
+    if (!onGenerateResumeLink) return;
+    setLinkState("generating");
+    const url = await onGenerateResumeLink(lead.id);
+    if (!url) {
+      setLinkState("error");
+      setTimeout(() => setLinkState("idle"), 2500);
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setLinkState("copied");
+    setTimeout(() => setLinkState("idle"), 2500);
   };
 
   const cleanDigits = lead.phone.replace(/[^0-9]/g, "");
@@ -246,6 +275,25 @@ function LeadRowCard({
             <span style={{ fontSize: 17, fontWeight: 800, color: GREEN, letterSpacing: "0.02em" }}>
               {lead.phone}
             </span>
+            {lead.contacted && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  background: "#E9F6EE",
+                  color: "#1E7B45",
+                  border: "1px solid rgba(30,123,69,0.25)",
+                  borderRadius: 6,
+                  padding: "3px 8px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              >
+                <UserCheck size={12} />
+                Contacted
+              </span>
+            )}
             <button
               type="button"
               onClick={copyPhone}
@@ -312,6 +360,60 @@ function LeadRowCard({
             <MessageSquare size={13} />
             WhatsApp
           </a>
+          {!dismissed && onSetContacted && (
+            <button
+              type="button"
+              onClick={handleToggleContacted}
+              disabled={togglingContacted}
+              title={lead.contacted ? "Mark as not yet contacted" : "Mark as contacted"}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 12px",
+                background: lead.contacted ? "#E9F6EE" : CREAM,
+                color: lead.contacted ? "#1E7B45" : GREEN,
+                border: `1px solid ${lead.contacted ? "rgba(30,123,69,0.25)" : BORDER}`,
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: togglingContacted ? "wait" : "pointer",
+              }}
+            >
+              <UserCheck size={13} />
+              {lead.contacted ? "Contacted" : "Mark Contacted"}
+            </button>
+          )}
+          {!dismissed && onGenerateResumeLink && (
+            <button
+              type="button"
+              onClick={handleGenerateResumeLink}
+              disabled={linkState === "generating"}
+              title="Generate a link the parent can use to finish on any device"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 12px",
+                background: CREAM,
+                color: GREEN,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: linkState === "generating" ? "wait" : "pointer",
+              }}
+            >
+              {linkState === "copied" ? <Check size={13} color="#1E7B45" /> : <Link2 size={13} />}
+              {linkState === "generating"
+                ? "Generating…"
+                : linkState === "copied"
+                  ? "Link copied"
+                  : linkState === "error"
+                    ? "Failed — retry"
+                    : "Resume Link"}
+            </button>
+          )}
           {dismissed ? (
             <button
               type="button"
@@ -517,6 +619,8 @@ export default function RegistrationsDashboard({
   onMarkVerified,
   onDeleteLead,
   onRestoreLead,
+  onSetContacted,
+  onGenerateResumeLink,
 }: Props) {
   const [view, setView] = useState<"analytics" | "registrations" | "leads">("analytics");
   const [showDismissed, setShowDismissed] = useState(false);
@@ -698,7 +802,13 @@ export default function RegistrationsDashboard({
           ) : (
             <div>
               {incompleteLeads.map((lead) => (
-                <LeadRowCard key={lead.id} lead={lead} onDelete={onDeleteLead} />
+                <LeadRowCard
+                  key={lead.id}
+                  lead={lead}
+                  onDelete={onDeleteLead}
+                  onSetContacted={onSetContacted}
+                  onGenerateResumeLink={onGenerateResumeLink}
+                />
               ))}
             </div>
           )}

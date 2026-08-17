@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { getDb } from "./db";
 import { computeAmountDue } from "./fee";
 
@@ -60,6 +61,8 @@ export interface IncompleteLeadRow {
   createdAt: string;
   updatedAt: string;
   submitted: boolean;
+  contacted: boolean;
+  resumeTokenExpiresAt: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,6 +107,8 @@ function rowFromDb(raw: any): IncompleteLeadRow {
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
     submitted: !!raw.submitted,
+    contacted: !!raw.contacted,
+    resumeTokenExpiresAt: raw.resume_token_expires_at ?? null,
   };
 }
 
@@ -227,7 +232,8 @@ export function markLeadSubmitted(sessionId: string): void {
 export function listIncompleteLeads(): IncompleteLeadRow[] {
   const db = getDb();
   // Filter out any lead already submitted, dismissed by staff, or whose
-  // phone number is now in completed registrations
+  // phone number is now in completed registrations. Not-yet-contacted leads
+  // sort first so staff always see who still needs a first call at the top.
   const rows = db
     .prepare(
       `SELECT * FROM incomplete_registrations
@@ -235,7 +241,7 @@ export function listIncompleteLeads(): IncompleteLeadRow[] {
          AND dismissed = 0
          AND phone != ''
          AND phone NOT IN (SELECT phone FROM registrations WHERE phone != '')
-       ORDER BY updated_at DESC`,
+       ORDER BY contacted ASC, updated_at DESC`,
     )
     .all();
 
@@ -267,4 +273,47 @@ export function deleteLead(id: number): void {
 export function restoreLead(id: number): void {
   const db = getDb();
   db.prepare("UPDATE incomplete_registrations SET dismissed = 0 WHERE id = ?").run(id);
+}
+
+export function setLeadContacted(id: number, contacted: boolean): void {
+  const db = getDb();
+  db.prepare("UPDATE incomplete_registrations SET contacted = ? WHERE id = ?").run(
+    contacted ? 1 : 0,
+    id,
+  );
+}
+
+const RESUME_TOKEN_TTL_HOURS = 48;
+
+// The phone call staff just made IS the identity check here — this token
+// only needs to be unguessable and time-limited, not paired with a login.
+// Scoped to exactly one lead's data, unlike the plain-email-lookup resume
+// feature that was rejected earlier for letting anyone view another
+// family's saved info with no verification at all.
+export function generateResumeToken(id: number): { token: string; expiresAt: string } | null {
+  const db = getDb();
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + RESUME_TOKEN_TTL_HOURS * 60 * 60 * 1000).toISOString();
+
+  const result = db
+    .prepare(
+      "UPDATE incomplete_registrations SET resume_token = ?, resume_token_expires_at = ? WHERE id = ?",
+    )
+    .run(token, expiresAt, id);
+
+  if (result.changes === 0) return null;
+  return { token, expiresAt };
+}
+
+export function getLeadByResumeToken(token: string): IncompleteLeadRow | null {
+  const db = getDb();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = db
+    .prepare(
+      `SELECT * FROM incomplete_registrations
+       WHERE resume_token = ? AND resume_token_expires_at > ?`,
+    )
+    .get(token, new Date().toISOString()) as any;
+
+  return raw ? rowFromDb(raw) : null;
 }

@@ -52,7 +52,7 @@ const PARTNERS = [
   { name: "Kate D", logo: "/logos/kate-d.png" },
 ];
 
-interface FormState {
+export interface FormState {
   // Section 1: Parent / Guardian
   parentName: string;
   relationship: string;
@@ -107,8 +107,19 @@ interface Draft {
   registrationId: number | null;
 }
 
-export default function InternshipApply() {
-  const [form, setForm] = useState<FormState>(INITIAL);
+// Resuming a lead from a staff-generated link (src/app/apply/resume/[token])
+// seeds the form with everything that lead already entered, and reuses their
+// sessionId so finishing the form updates that same saved record instead of
+// creating a duplicate.
+interface ResumeLead {
+  sessionId: string;
+  form: Partial<FormState>;
+}
+
+export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLead } = {}) {
+  const [form, setForm] = useState<FormState>(() =>
+    resumeLead ? { ...INITIAL, ...resumeLead.form } : INITIAL,
+  );
   const [registrationId, setRegistrationId] = useState<number | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -177,6 +188,15 @@ export default function InternshipApply() {
   // ── Load any saved draft & session ID on mount ────────────────
   useEffect(() => {
     try {
+      if (resumeLead) {
+        // A resume link is the authoritative source — don't let a stale
+        // local draft on this device (or a different lead's session)
+        // override the data staff just confirmed with the parent.
+        sessionId.current = resumeLead.sessionId;
+        window.localStorage.setItem(LEAD_SESSION_KEY, resumeLead.sessionId);
+        return;
+      }
+
       let sid = window.localStorage.getItem(LEAD_SESSION_KEY);
       if (!sid) {
         sid = "lead_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9);
@@ -191,11 +211,11 @@ export default function InternshipApply() {
         setRegistrationId(draft.registrationId ?? null);
       }
     } catch {
-      sessionId.current = "lead_" + Date.now().toString(36);
+      sessionId.current = resumeLead?.sessionId ?? "lead_" + Date.now().toString(36);
     } finally {
       loadedDraft.current = true;
     }
-  }, []);
+  }, [resumeLead]);
 
   // ── Persist the draft on every change, once the initial load has run ──
   useEffect(() => {

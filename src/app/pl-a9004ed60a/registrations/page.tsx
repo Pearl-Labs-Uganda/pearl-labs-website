@@ -2,7 +2,13 @@ import { listRegistrations } from "@/lib/registrations";
 import { getEventCounts } from "@/lib/analyticsEvents";
 import { listIncompleteLeads, listDismissedLeads } from "@/lib/leads";
 import RegistrationsDashboard from "@/components/dev/RegistrationsDashboard";
-import { markVerifiedAction, deleteLeadAction, restoreLeadAction } from "./actions";
+import {
+  markVerifiedAction,
+  deleteLeadAction,
+  restoreLeadAction,
+  setLeadContactedAction,
+  generateResumeLinkAction,
+} from "./actions";
 
 // Reads live DB state on every visit — without this, Next.js prerenders the
 // page once at build time (the auth check lives in middleware.ts, not here,
@@ -26,6 +32,8 @@ export default function DevRegistrationsPage() {
       onMarkVerified={markVerifiedAction}
       onDeleteLead={deleteLeadAction}
       onRestoreLead={restoreLeadAction}
+      onSetContacted={setLeadContactedAction}
+      onGenerateResumeLink={generateResumeLinkAction}
     />
   );
 }
