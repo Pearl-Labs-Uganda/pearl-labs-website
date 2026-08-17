@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { formatUgx } from "@/lib/fee";
 import { saveRegistration, type RegistrationInput } from "@/lib/registrations";
 import { markLeadSubmitted } from "@/lib/leads";
+import { isValidMomoTransactionId } from "@/lib/transactionId";
 
 interface RegistrationPayload extends RegistrationInput {
   id?: number;
@@ -26,6 +27,7 @@ const requiredFields: Array<keyof RegistrationInput> = [
   "hearAbout",
   "pickupService",
   "photoConsent",
+  "paymentMethod",
 ];
 
 function isValidEmail(value: string): boolean {
@@ -98,6 +100,17 @@ function validatePayload(payload: Partial<RegistrationPayload>): string | null {
     return "Please tell us how you heard about us";
   }
 
+  if (payload.paymentMethod !== "MTN MoMo" && payload.paymentMethod !== "Cash") {
+    return "Please select how you'll be paying";
+  }
+
+  if (
+    payload.paymentMethod === "MTN MoMo" &&
+    !isValidMomoTransactionId(payload.transactionId)
+  ) {
+    return "That doesn't look like a valid Transaction ID — check your MTN MoMo confirmation SMS, or leave it blank if you haven't paid yet";
+  }
+
   return null;
 }
 
@@ -111,7 +124,7 @@ export async function POST(request: Request) {
     }
 
     const reg = payload as RegistrationPayload;
-    const { row, shouldSendEmail } = saveRegistration(
+    const row = saveRegistration(
       {
         parentName: reg.parentName,
         relationship: reg.relationship,
@@ -136,7 +149,11 @@ export async function POST(request: Request) {
         additionalInfo: reg.additionalInfo,
         agreeTerms: reg.agreeTerms,
         photoConsent: reg.photoConsent,
-        transactionId: reg.transactionId,
+        paymentMethod: reg.paymentMethod,
+        // Cash payers pay in person — ignore any stray transaction ID rather
+        // than trusting the client, so a cash registration can never end up
+        // looking like an unverified MoMo payment.
+        transactionId: reg.paymentMethod === "Cash" ? undefined : reg.transactionId,
       },
       reg.id,
     );
@@ -145,10 +162,10 @@ export async function POST(request: Request) {
       markLeadSubmitted(reg.sessionId);
     }
 
-    if (!shouldSendEmail) {
-      return NextResponse.json({ ok: true, id: row.id });
-    }
-
+    // Every submission gets emailed as a backup, paid or not — the dashboard
+    // has had bugs hide real submissions before, so the inbox is the
+    // fallback source of truth. The subject line flags payment status so
+    // it stays scannable.
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const toEmail = process.env.INTERNSHIP_TO_EMAIL ?? smtpUser;
@@ -216,6 +233,7 @@ export async function POST(request: Request) {
       `How they heard about us: ${row.hearAbout}${row.hearAbout === "Other" ? ` (${row.hearAboutOther})` : ""}`,
       "",
       "PAYMENT",
+      `Payment Method: ${row.paymentMethod}`,
       `Transaction ID: ${row.transactionId ?? "Not provided"}`,
       "",
       "DROP-OFF & PICK-UP",
@@ -254,6 +272,7 @@ export async function POST(request: Request) {
       <p><strong>Amount Due:</strong> ${escapeHtml(amountText)}</p>
       <p><strong>How they heard about us:</strong> ${escapeHtml(row.hearAbout)}${row.hearAbout === "Other" ? ` (${escapeHtml(row.hearAboutOther ?? "")})` : ""}</p>
       <h3>Payment</h3>
+      <p><strong>Payment Method:</strong> ${escapeHtml(row.paymentMethod)}</p>
       <p><strong>Transaction ID:</strong> ${escapeHtml(row.transactionId ?? "Not provided")}</p>
       <h3>Drop-off &amp; Pick-up</h3>
       <p><strong>Wants service:</strong> ${escapeHtml(row.pickupService)}</p>
@@ -266,11 +285,18 @@ export async function POST(request: Request) {
       <p><strong>Photo/recording consent:</strong> ${escapeHtml(row.photoConsent)}</p>
     `;
 
+    const subjectTag =
+      row.paymentMethod === "Cash"
+        ? "[CASH] "
+        : row.transactionId
+          ? ""
+          : "[UNPAID] ";
+
     await transporter.sendMail({
       from: process.env.SMTP_FROM ?? `Pearl Labs Website <${smtpUser}>`,
       to: toEmail,
       replyTo: row.email,
-      subject: `Bootcamp Registration - ${row.studentName} (${row.parentName})`,
+      subject: `${subjectTag}Bootcamp Registration - ${row.studentName} (${row.parentName})`,
       text,
       html,
     });

@@ -124,7 +124,9 @@ function Row({
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.parentName} · {row.phone}</span>
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.modules.join(", ")}</span>
         <span style={{ fontSize: 12.5, fontWeight: 700, color: ORANGE }}>{formatUgx(row.amountDue)}</span>
-        <span style={{ fontSize: 11, color: "#4C616C" }}>{formatDateTime(row.createdAt)}</span>
+        <span style={{ fontSize: 11, color: "#4C616C" }}>
+          {row.paymentMethod || "Payment method not recorded"} · {formatDateTime(row.createdAt)}
+        </span>
       </button>
 
       {open && (
@@ -141,6 +143,7 @@ function Row({
           <p><strong>Medical info:</strong> {row.medicalInfo || "Not provided"}</p>
           <p><strong>Additional info:</strong> {row.additionalInfo || "Not provided"}</p>
           <p><strong>Photo consent:</strong> {row.photoConsent}</p>
+          <p><strong>Payment method:</strong> {row.paymentMethod || "Not recorded (submitted before this was tracked)"}</p>
           <p><strong>Transaction ID:</strong> {row.transactionId || "Not provided"}</p>
           {row.verifiedAt && <p><strong>Verified at:</strong> {formatDateTime(row.verifiedAt)}</p>}
 
@@ -425,12 +428,17 @@ export default function RegistrationsDashboard({
   onDeleteLead,
 }: Props) {
   const [view, setView] = useState<"analytics" | "registrations" | "leads">("analytics");
-  const unpaid = registrations.filter((r) => !r.transactionId);
-  const awaiting = registrations.filter((r) => r.transactionId && !r.verified);
-  const verified = registrations.filter((r) => r.transactionId && r.verified);
+  // Rows saved before payment_method existed have "" — treat those as MoMo,
+  // since MoMo was the only option at the time.
+  const isCash = (r: RegistrationRow) => r.paymentMethod === "Cash";
+  const unpaid = registrations.filter((r) => !isCash(r) && !r.transactionId && !r.verified);
+  const awaiting = registrations.filter((r) => !isCash(r) && r.transactionId && !r.verified);
+  const cashAwaiting = registrations.filter((r) => isCash(r) && !r.verified);
+  const verified = registrations.filter((r) => r.verified);
 
-  // A transaction ID means the family is claiming a spot, verified or not.
-  const reservedCount = awaiting.length + verified.length;
+  // Choosing cash or giving a transaction ID both mean the family is
+  // claiming a spot, verified or not.
+  const reservedCount = awaiting.length + cashAwaiting.length + verified.length;
   const capacityPct = Math.min(100, Math.round((reservedCount / TOTAL_SPOTS) * 100));
   const conversionRate =
     registrations.length > 0 ? Math.round((verified.length / registrations.length) * 100) : 0;
@@ -495,11 +503,23 @@ export default function RegistrationsDashboard({
               caption={`${pct(eventCounts.momoCodeCopied, eventCounts.applyView)} of visits`}
             />
             <StatTile
-              label="Submitted the form"
-              value={eventCounts.formSubmitted}
-              caption={`${pct(eventCounts.formSubmitted, eventCounts.formStarted)} of starts`}
+              label="Registrations completed"
+              value={registrations.length}
+              caption={`${pct(registrations.length, eventCounts.formStarted)} of starts`}
             />
           </div>
+          {/* Raw submit-button clicks — can be higher than "Registrations
+              completed" when someone resubmits (e.g. saving unpaid, then
+              coming back to add a transaction ID). Shown separately so a
+              busy retry session never reads as more real registrations than
+              actually happened. */}
+          <p style={{ fontSize: 11.5, color: "#8C9BA5", marginTop: -12, marginBottom: 20 }}>
+            {eventCounts.formSubmitted} submit-button clicks recorded in total
+            {eventCounts.formSubmitted > registrations.length
+              ? ` — ${eventCounts.formSubmitted - registrations.length} were resubmissions of an existing registration, not new ones`
+              : ""}
+            .
+          </p>
 
           <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4C616C", marginBottom: 10 }}>
             Registration &amp; Lead Stats
@@ -521,7 +541,7 @@ export default function RegistrationsDashboard({
               <div style={{ height: "100%", width: `${capacityPct}%`, background: ORANGE, borderRadius: "0 5px 5px 0" }} />
             </div>
             <p style={{ fontSize: 11.5, color: "#4C616C", marginTop: 8 }}>
-              {verified.length} verified · {awaiting.length} awaiting confirmation
+              {verified.length} verified · {awaiting.length} awaiting MoMo confirmation · {cashAwaiting.length} paying cash
             </p>
           </div>
 
@@ -546,6 +566,13 @@ export default function RegistrationsDashboard({
             showVerifyButton
             onMarkVerified={onMarkVerified}
             emptyText="Nothing waiting on verification."
+          />
+          <Section
+            title="Paying Cash"
+            rows={cashAwaiting}
+            showVerifyButton
+            onMarkVerified={onMarkVerified}
+            emptyText="No one has chosen to pay cash yet."
           />
           <Section
             title="Verified"

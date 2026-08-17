@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Copy, Check, ChevronDown } from "lucide-react";
 import { MODULE_NAMES, computeAmountDue, formatUgx } from "@/lib/fee";
 import { trackEvent } from "@/lib/analytics";
+import { normalizeTransactionId, isValidMomoTransactionId } from "@/lib/transactionId";
 
 const MERCHANT_CODE = "07778381";
 
@@ -32,6 +33,8 @@ const COHORTS = [
   "Cohort A — Explorers (Ages 6–13)",
   "Cohort B — Innovators (Ages 13–19)",
 ];
+
+const PAYMENT_METHODS = ["MTN MoMo", "Cash"];
 
 const HEAR_ABOUT_OPTIONS = [
   "Social Media",
@@ -71,6 +74,7 @@ interface FormState {
   hearAbout: string;
   hearAboutOther: string;
   // Section 4: Payment
+  paymentMethod: string;
   transactionId: string;
   // Section 5: Drop-off & pick-up
   pickupService: string;
@@ -89,7 +93,7 @@ const INITIAL: FormState = {
   studentName: "", age: "", gender: "", school: "", classGrade: "",
   cohort: "", hasLaptop: "",
   modules: [], hearAbout: "", hearAboutOther: "",
-  transactionId: "",
+  paymentMethod: "", transactionId: "",
   pickupService: "", pickupLocation: "",
   medicalInfo: "", additionalInfo: "",
   agreeTerms: false, photoConsent: "",
@@ -143,7 +147,7 @@ export default function InternshipApply() {
       case 3:
         return Boolean(errors.modules || errors.hearAbout || errors.hearAboutOther);
       case 4:
-        return Boolean(errors.transactionId);
+        return Boolean(errors.paymentMethod || errors.transactionId);
       case 5:
         return Boolean(errors.pickupService || errors.pickupLocation);
       case 6:
@@ -244,6 +248,10 @@ export default function InternshipApply() {
     if (form.hearAbout === "Other" && !form.hearAboutOther.trim())
       e.hearAboutOther = "Please tell us how you heard about us";
 
+    if (!form.paymentMethod)       e.paymentMethod = "Please select how you'll be paying";
+    if (form.paymentMethod === "MTN MoMo" && !isValidMomoTransactionId(form.transactionId))
+      e.transactionId = "Doesn't look like a valid Transaction ID — check your MoMo SMS, or leave blank if you haven't paid yet";
+
     if (!form.pickupService)       e.pickupService = "Required";
     if (form.pickupService === "Yes" && !form.pickupLocation.trim())
       e.pickupLocation = "Required";
@@ -312,7 +320,7 @@ export default function InternshipApply() {
     setStatus("sending");
     setSubmitError("");
 
-    const hasTransactionId = Boolean(form.transactionId.trim());
+    const hasTransactionId = normalizeTransactionId(form.transactionId) !== null;
 
     try {
       const response = await fetch("/api/internship-apply", {
@@ -766,54 +774,63 @@ export default function InternshipApply() {
           </button>
           {openSections[4] && (
             <div style={{ marginTop: 14 }}>
-              <div style={s.row2}>
-                <div style={s.amountBox}>
-                  <span style={s.amountLabel}>Amount Due</span>
-                  <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={copyMerchantCode}
-                    style={s.merchantCodeBox}
-                  >
-                    <span style={s.merchantCodeLabel}>Merchant Code</span>
-                    <span style={s.merchantCodeRight}>
-                      <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
-                      {codeCopied ? (
-                        <Check size={18} color="#ffffff" />
-                      ) : (
-                        <Copy size={18} color="#ffffff" />
-                      )}
-                    </span>
-                  </button>
-                  {codeCopied && <p style={s.copiedHint}>Copied!</p>}
-                </div>
+              <div style={s.amountBox}>
+                <span style={s.amountLabel}>Amount Due</span>
+                <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
               </div>
-
-              <p style={s.paymentInstructions}>
-                Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
-                select <strong>Pay Merchant / Pay Bill</strong>, then enter the
-                merchant code above, the amount above, and confirm with your MTN
-                MoMo PIN.
-              </p>
-
-              <p style={s.cashNote}>
-                <strong>Prefer to pay cash?</strong> You&apos;re welcome to pay in
-                person — on the first day of the bootcamp, or any time before
-                then during working hours, at Pearl Labs.
-              </p>
 
               <div style={{ marginTop: 18 }}>
-                {renderInput("transactionId", "Transaction ID", {
-                  placeholder: "e.g. from your MTN MoMo confirmation SMS",
-                })}
-                <p style={s.fieldHint}>
-                  Don&apos;t have it yet? Leave this blank and submit — your
-                  details are saved, so you can come back and add it once
-                  you&apos;ve paid.
-                </p>
+                {renderSelect("paymentMethod", "How will you pay? *", PAYMENT_METHODS)}
               </div>
+
+              {form.paymentMethod === "MTN MoMo" && (
+                <>
+                  <div style={{ ...s.row2, marginTop: 18 }}>
+                    <button
+                      type="button"
+                      onClick={copyMerchantCode}
+                      style={s.merchantCodeBox}
+                    >
+                      <span style={s.merchantCodeLabel}>Merchant Code</span>
+                      <span style={s.merchantCodeRight}>
+                        <span style={s.merchantCodeValue}>{MERCHANT_CODE}</span>
+                        {codeCopied ? (
+                          <Check size={18} color="#ffffff" />
+                        ) : (
+                          <Copy size={18} color="#ffffff" />
+                        )}
+                      </span>
+                    </button>
+                    {codeCopied && <p style={s.copiedHint}>Copied!</p>}
+                  </div>
+
+                  <p style={s.paymentInstructions}>
+                    Dial <strong>*165*3#</strong> on the parent/guardian&apos;s MTN line,
+                    select <strong>Pay Merchant / Pay Bill</strong>, then enter the
+                    merchant code above, the amount above, and confirm with your MTN
+                    MoMo PIN.
+                  </p>
+
+                  <div style={{ marginTop: 18 }}>
+                    {renderInput("transactionId", "Transaction ID", {
+                      placeholder: "e.g. from your MTN MoMo confirmation SMS",
+                    })}
+                    <p style={s.fieldHint}>
+                      Don&apos;t have it yet? Leave this blank and submit — your
+                      details are saved, so you can come back and add it once
+                      you&apos;ve paid.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {form.paymentMethod === "Cash" && (
+                <p style={s.cashNote}>
+                  <strong>Paying cash:</strong> bring the amount above in person —
+                  on the first day of the bootcamp, or any time before then
+                  during working hours, at Pearl Labs.
+                </p>
+              )}
             </div>
           )}
 

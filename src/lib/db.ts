@@ -83,15 +83,24 @@ const INCOMPLETE_LEAD_MIGRATION_COLUMNS: Record<string, string> = {
   photo_consent: "TEXT",
 };
 
-function migrateIncompleteRegistrations(db: Database.Database): void {
+// Payment method wasn't captured before — parents just had MoMo instructions
+// with an informational "or pay cash" note, so there was no way to tell
+// whether someone chose cash or simply hadn't paid yet with MoMo.
+const REGISTRATIONS_MIGRATION_COLUMNS: Record<string, string> = {
+  payment_method: "TEXT NOT NULL DEFAULT ''",
+};
+
+function migrateColumns(
+  db: Database.Database,
+  table: string,
+  columns: Record<string, string>,
+): void {
   const existingColumns = new Set(
-    (db.prepare("PRAGMA table_info(incomplete_registrations)").all() as { name: string }[]).map(
-      (c) => c.name,
-    ),
+    (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name),
   );
-  for (const [column, type] of Object.entries(INCOMPLETE_LEAD_MIGRATION_COLUMNS)) {
+  for (const [column, type] of Object.entries(columns)) {
     if (!existingColumns.has(column)) {
-      db.exec(`ALTER TABLE incomplete_registrations ADD COLUMN ${column} ${type}`);
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
     }
   }
 }
@@ -108,7 +117,8 @@ export function getDb(): Database.Database {
   instance = new Database(dbPath);
   instance.pragma("journal_mode = WAL");
   instance.exec(SCHEMA);
-  migrateIncompleteRegistrations(instance);
+  migrateColumns(instance, "incomplete_registrations", INCOMPLETE_LEAD_MIGRATION_COLUMNS);
+  migrateColumns(instance, "registrations", REGISTRATIONS_MIGRATION_COLUMNS);
   return instance;
 }
 

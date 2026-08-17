@@ -1,5 +1,8 @@
 import { getDb } from "./db";
 import { computeAmountDue } from "./fee";
+import { normalizeTransactionId } from "./transactionId";
+
+export type PaymentMethod = "MTN MoMo" | "Cash";
 
 export interface RegistrationInput {
   parentName: string;
@@ -25,6 +28,7 @@ export interface RegistrationInput {
   additionalInfo?: string;
   agreeTerms: boolean;
   photoConsent: string;
+  paymentMethod: PaymentMethod;
   transactionId?: string;
 }
 
@@ -36,11 +40,6 @@ export interface RegistrationRow extends Omit<RegistrationInput, "transactionId"
   verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-interface SaveResult {
-  row: RegistrationRow;
-  shouldSendEmail: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,6 +70,7 @@ function rowFromDb(raw: any): RegistrationRow {
     additionalInfo: raw.additional_info ?? undefined,
     agreeTerms: !!raw.agree_terms,
     photoConsent: raw.photo_consent,
+    paymentMethod: raw.payment_method as PaymentMethod,
     transactionId: raw.transaction_id ?? undefined,
     verified: !!raw.verified,
     verifiedAt: raw.verified_at ?? null,
@@ -105,21 +105,21 @@ function paramsFromInput(input: RegistrationInput, amountDue: number, transactio
     additional_info: input.additionalInfo ?? null,
     agree_terms: input.agreeTerms ? 1 : 0,
     photo_consent: input.photoConsent,
+    payment_method: input.paymentMethod,
     transaction_id: transactionId,
   };
 }
 
-export function saveRegistration(input: RegistrationInput, id?: number): SaveResult {
+export function saveRegistration(input: RegistrationInput, id?: number): RegistrationRow {
   const db = getDb();
   const now = new Date().toISOString();
   const amountDue = computeAmountDue(input.modules);
-  const newTransactionId = input.transactionId?.trim() || null;
+  const newTransactionId = normalizeTransactionId(input.transactionId);
 
   if (id != null) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = db.prepare("SELECT * FROM registrations WHERE id = ?").get(id) as any;
     if (existing) {
-      const previousTransactionId: string | null = existing.transaction_id ?? null;
       db.prepare(
         `UPDATE registrations SET
           updated_at = @updated_at, parent_name = @parent_name, relationship = @relationship,
@@ -130,15 +130,13 @@ export function saveRegistration(input: RegistrationInput, id?: number): SaveRes
           hear_about_other = @hear_about_other, pickup_service = @pickup_service,
           pickup_location = @pickup_location, medical_info = @medical_info,
           additional_info = @additional_info, agree_terms = @agree_terms,
-          photo_consent = @photo_consent, transaction_id = @transaction_id
+          photo_consent = @photo_consent, payment_method = @payment_method,
+          transaction_id = @transaction_id
         WHERE id = @id`,
       ).run({ id, updated_at: now, ...paramsFromInput(input, amountDue, newTransactionId) });
 
       const updated = db.prepare("SELECT * FROM registrations WHERE id = ?").get(id);
-      return {
-        row: rowFromDb(updated),
-        shouldSendEmail: newTransactionId !== null && newTransactionId !== previousTransactionId,
-      };
+      return rowFromDb(updated);
     }
   }
 
@@ -148,21 +146,20 @@ export function saveRegistration(input: RegistrationInput, id?: number): SaveRes
         created_at, updated_at, parent_name, relationship, profession, phone, alt_phone,
         email, address, student_name, age, gender, school, class_grade, cohort, has_laptop,
         modules, amount_due, hear_about, hear_about_other, pickup_service, pickup_location,
-        medical_info, additional_info, agree_terms, photo_consent, transaction_id, verified, verified_at
+        medical_info, additional_info, agree_terms, photo_consent, payment_method,
+        transaction_id, verified, verified_at
       ) VALUES (
         @created_at, @updated_at, @parent_name, @relationship, @profession, @phone, @alt_phone,
         @email, @address, @student_name, @age, @gender, @school, @class_grade, @cohort, @has_laptop,
         @modules, @amount_due, @hear_about, @hear_about_other, @pickup_service, @pickup_location,
-        @medical_info, @additional_info, @agree_terms, @photo_consent, @transaction_id, 0, NULL
+        @medical_info, @additional_info, @agree_terms, @photo_consent, @payment_method,
+        @transaction_id, 0, NULL
       )`,
     )
     .run({ created_at: now, updated_at: now, ...paramsFromInput(input, amountDue, newTransactionId) });
 
   const created = db.prepare("SELECT * FROM registrations WHERE id = ?").get(info.lastInsertRowid);
-  return {
-    row: rowFromDb(created),
-    shouldSendEmail: newTransactionId !== null,
-  };
+  return rowFromDb(created);
 }
 
 export function listRegistrations(): RegistrationRow[] {
