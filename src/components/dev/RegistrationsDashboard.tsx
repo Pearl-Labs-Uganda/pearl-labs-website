@@ -600,7 +600,7 @@ export default function RegistrationsDashboard({
           </div>
         </>
       ) : view === "registrations" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 20, alignItems: "start" }}>
           <Section
             title="Unpaid"
             rows={unpaid}
