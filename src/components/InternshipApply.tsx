@@ -249,8 +249,12 @@ export default function InternshipApply() {
       e.hearAboutOther = "Please tell us how you heard about us";
 
     if (!form.paymentMethod)       e.paymentMethod = "Please select how you'll be paying";
-    if (form.paymentMethod === "MTN MoMo" && !isValidMomoTransactionId(form.transactionId))
-      e.transactionId = "Doesn't look like a valid Transaction ID — check your MoMo SMS, or leave blank if you haven't paid yet";
+    if (form.paymentMethod === "MTN MoMo") {
+      if (!form.transactionId.trim())
+        e.transactionId = "Required — your progress is already saved, so it's safe to come back once you've paid and have your MoMo confirmation SMS";
+      else if (!isValidMomoTransactionId(form.transactionId))
+        e.transactionId = "Doesn't look like a valid Transaction ID — check your MoMo confirmation SMS";
+    }
 
     if (!form.pickupService)       e.pickupService = "Required";
     if (form.pickupService === "Yes" && !form.pickupLocation.trim())
@@ -812,13 +816,13 @@ export default function InternshipApply() {
                   </p>
 
                   <div style={{ marginTop: 18 }}>
-                    {renderInput("transactionId", "Transaction ID", {
+                    {renderInput("transactionId", "Transaction ID *", {
                       placeholder: "e.g. from your MTN MoMo confirmation SMS",
                     })}
                     <p style={s.fieldHint}>
-                      Don&apos;t have it yet? Leave this blank and submit — your
-                      details are saved, so you can come back and add it once
-                      you&apos;ve paid.
+                      Required to submit. Don&apos;t have it yet? That&apos;s fine
+                      — everything you&apos;ve entered is already saved on our
+                      end, so just come back and finish once you&apos;ve paid.
                     </p>
                   </div>
                 </>

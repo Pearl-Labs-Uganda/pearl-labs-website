@@ -67,7 +67,12 @@ function TabBar({
 }
 
 function pct(part: number, whole: number): string {
-  return whole > 0 ? `${Math.round((part / whole) * 100)}%` : "—";
+  if (whole <= 0) return "—";
+  const rounded = Math.round((part / whole) * 100);
+  // Round-to-whole-percent reads as "nobody did this" when it's actually a
+  // handful of people out of hundreds of visits — say so explicitly instead.
+  if (rounded === 0 && part > 0) return "<1%";
+  return `${rounded}%`;
 }
 
 // Pinning an explicit locale + format keeps server and client output identical.

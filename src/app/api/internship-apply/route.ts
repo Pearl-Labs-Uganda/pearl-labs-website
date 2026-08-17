@@ -104,11 +104,13 @@ function validatePayload(payload: Partial<RegistrationPayload>): string | null {
     return "Please select how you'll be paying";
   }
 
-  if (
-    payload.paymentMethod === "MTN MoMo" &&
-    !isValidMomoTransactionId(payload.transactionId)
-  ) {
-    return "That doesn't look like a valid Transaction ID — check your MTN MoMo confirmation SMS, or leave it blank if you haven't paid yet";
+  if (payload.paymentMethod === "MTN MoMo") {
+    if (!(payload.transactionId ?? "").trim()) {
+      return "Transaction ID is required for MTN MoMo payments";
+    }
+    if (!isValidMomoTransactionId(payload.transactionId)) {
+      return "That doesn't look like a valid Transaction ID — check your MTN MoMo confirmation SMS";
+    }
   }
 
   return null;
