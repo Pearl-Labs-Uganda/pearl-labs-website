@@ -99,7 +99,7 @@ const INITIAL: FormState = {
   agreeTerms: false, photoConsent: "",
 };
 
-type Status = "idle" | "sending" | "saved" | "sent" | "error";
+type Status = "idle" | "sending" | "sent" | "error";
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 interface Draft {
@@ -364,18 +364,16 @@ export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLea
         throw new Error(data?.error || "Failed to submit registration");
       }
 
-      const data = (await response.json()) as { ok: boolean; id: number };
       trackEvent("form_submitted", { has_payment: hasTransactionId });
 
-      if (hasTransactionId) {
-        window.localStorage.removeItem(DRAFT_KEY);
-        setForm(INITIAL);
-        setRegistrationId(null);
-        setStatus("sent");
-      } else {
-        setRegistrationId(data.id);
-        setStatus("saved");
-      }
+      // Both payment methods are fully complete on a successful submit:
+      // MoMo already requires a valid Transaction ID to get past validate(),
+      // and Cash never has one by design — so there's no "come back and
+      // finish later" state left to represent here.
+      window.localStorage.removeItem(DRAFT_KEY);
+      setForm(INITIAL);
+      setRegistrationId(null);
+      setStatus("sent");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to submit registration";
@@ -621,14 +619,6 @@ export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLea
               <button type="button" onClick={startNewRegistration} style={s.draftBannerLink}>
                 Start a new registration
               </button>
-            </div>
-          )}
-
-          {status === "saved" && (
-            <div style={s.savedBanner}>
-              Registration saved — once you&apos;ve paid via MTN MoMo, come back
-              to this page (your details will still be here), add your
-              Transaction ID below, and submit again to complete your spot.
             </div>
           )}
 
@@ -1040,7 +1030,6 @@ const s: Record<string, React.CSSProperties> = {
   formSub: { fontSize: 13, color: FORM_BLACK, marginTop: 6, lineHeight: 1.6, maxWidth: 480 },
   draftBanner: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 12.5, color: FORM_BLACK, background: FORM_GREY, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", marginTop: 16 },
   draftBannerLink: { background: "none", border: "none", color: FORM_BLACK, fontWeight: 600, fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline" },
-  savedBanner: { fontSize: 13, color: FORM_BLACK, lineHeight: 1.6, background: FORM_GREY, border: `1px solid ${FORM_BLACK}`, borderRadius: 8, padding: "14px 16px", marginTop: 16 },
   divider: { height: 1, background: BORDER, margin: "24px 0" },
   expandAllBtn: { background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: FORM_BLACK, cursor: "pointer" },
   sectionHeaderBtn: { width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: "4px 0", cursor: "pointer", textAlign: "left" },
