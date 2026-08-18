@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { formatUgx } from "@/lib/fee";
-import { saveRegistration, type RegistrationInput } from "@/lib/registrations";
+import { saveRegistration, type RegistrationInput, type RegistrationRow } from "@/lib/registrations";
 import { markLeadSubmitted } from "@/lib/leads";
 import { isValidMomoTransactionId } from "@/lib/transactionId";
+import { getRegistrationCapacityStatus } from "@/lib/settings";
 
 interface RegistrationPayload extends RegistrationInput {
   id?: number;
@@ -41,35 +42,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-  return "Unknown error";
-}
-
-function getMailErrorResponse(error: unknown): { error: string; status: number } {
-  const message = getErrorMessage(error);
-  const lower = message.toLowerCase();
-
-  if (
-    lower.includes("invalid login") ||
-    lower.includes("badcredentials") ||
-    lower.includes("535-5.7.8")
-  ) {
-    return {
-      error:
-        "Email authentication failed. For Gmail SMTP, use a Google App Password (not your regular Gmail password) in SMTP_PASS.",
-      status: 500,
-    };
-  }
-
-  return {
-    error: `Could not send registration: ${message}`,
-    status: 500,
-  };
 }
 
 function validatePayload(payload: Partial<RegistrationPayload>): string | null {
@@ -118,6 +90,15 @@ function validatePayload(payload: Partial<RegistrationPayload>): string | null {
 
 export async function POST(request: Request) {
   try {
+    // Staff can manually declare the bootcamp full — this is checked here,
+    // not just hidden in the UI, so a request sent straight to this endpoint
+    // can't bypass it. The dashboard's capacity numbers are unaffected; this
+    // is an independent override.
+    const capacity = getRegistrationCapacityStatus();
+    if (capacity.full) {
+      return NextResponse.json({ error: capacity.message }, { status: 403 });
+    }
+
     const payload = (await request.json()) as Partial<RegistrationPayload>;
     const validationError = validatePayload(payload);
 
@@ -158,6 +139,7 @@ export async function POST(request: Request) {
         transactionId: reg.paymentMethod === "Cash" ? undefined : reg.transactionId,
       },
       reg.id,
+      reg.sessionId,
     );
 
     if (reg.sessionId) {
@@ -168,29 +150,38 @@ export async function POST(request: Request) {
     // has had bugs hide real submissions before, so the inbox is the
     // fallback source of truth. The subject line flags payment status so
     // it stays scannable.
+    //
+    // The registration row above is already saved by this point, so an
+    // email failure below must never turn into a client-facing error — that
+    // would tell a parent their submission failed when it didn't, and the
+    // frontend's response is to let them resubmit, creating duplicate rows.
+    try {
+      await sendRegistrationEmail(row);
+    } catch (emailError) {
+      console.error("Registration saved but confirmation email failed:", emailError);
+    }
+
+    return NextResponse.json({ ok: true, id: row.id });
+  } catch (error) {
+    console.error("Failed to submit bootcamp registration:", error);
+    return NextResponse.json({ error: "Could not save registration" }, { status: 500 });
+  }
+}
+
+async function sendRegistrationEmail(row: RegistrationRow) {
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const toEmail = process.env.INTERNSHIP_TO_EMAIL ?? smtpUser;
 
     if (!smtpUser || !smtpPass || !toEmail) {
-      return NextResponse.json(
-        {
-          error:
-            "Email server is not configured. Set SMTP_USER, SMTP_PASS, and INTERNSHIP_TO_EMAIL in your environment.",
-          id: row.id,
-        },
-        { status: 500 },
+      throw new Error(
+        "Email server is not configured. Set SMTP_USER, SMTP_PASS, and INTERNSHIP_TO_EMAIL in your environment.",
       );
     }
 
     if (!isValidEmail(toEmail)) {
-      return NextResponse.json(
-        {
-          error:
-            "INTERNSHIP_TO_EMAIL is invalid. Please provide a full email address like hello@pearllabs.ug.",
-          id: row.id,
-        },
-        { status: 500 },
+      throw new Error(
+        "INTERNSHIP_TO_EMAIL is invalid. Please provide a full email address like hello@pearllabs.ug.",
       );
     }
 
@@ -302,16 +293,4 @@ export async function POST(request: Request) {
       text,
       html,
     });
-
-    return NextResponse.json({ ok: true, id: row.id });
-  } catch (error) {
-    console.error("Failed to submit bootcamp registration:", error);
-    const isProduction = process.env.NODE_ENV === "production";
-    const detailed = getMailErrorResponse(error);
-
-    return NextResponse.json(
-      { error: isProduction ? "Could not send registration" : detailed.error },
-      { status: detailed.status },
-    );
-  }
 }

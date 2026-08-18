@@ -44,6 +44,11 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS incomplete_registrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT UNIQUE NOT NULL,
@@ -92,6 +97,11 @@ const INCOMPLETE_LEAD_MIGRATION_COLUMNS: Record<string, string> = {
 // whether someone chose cash or simply hadn't paid yet with MoMo.
 const REGISTRATIONS_MIGRATION_COLUMNS: Record<string, string> = {
   payment_method: "TEXT NOT NULL DEFAULT ''",
+  // The client already generates a stable per-draft sessionId for incomplete-
+  // lead tracking; reusing it here lets a resubmit (retry after a dropped
+  // response, double-click, etc.) update the same row instead of inserting
+  // a duplicate registration for the same family.
+  session_id: "TEXT",
 };
 
 function migrateColumns(

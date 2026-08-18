@@ -116,7 +116,17 @@ interface ResumeLead {
   form: Partial<FormState>;
 }
 
-export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLead } = {}) {
+interface InternshipApplyProps {
+  resumeLead?: ResumeLead;
+  registrationFull?: boolean;
+  registrationFullMessage?: string;
+}
+
+export default function InternshipApply({
+  resumeLead,
+  registrationFull = false,
+  registrationFullMessage,
+}: InternshipApplyProps = {}) {
   const [form, setForm] = useState<FormState>(() =>
     resumeLead ? { ...INITIAL, ...resumeLead.form } : INITIAL,
   );
@@ -371,6 +381,11 @@ export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLea
       // and Cash never has one by design — so there's no "come back and
       // finish later" state left to represent here.
       window.localStorage.removeItem(DRAFT_KEY);
+      // Rotate the session id so a second registration on this same device
+      // (another child, same parent) gets its own row instead of matching
+      // this completed one by sessionId and overwriting it.
+      window.localStorage.removeItem(LEAD_SESSION_KEY);
+      sessionId.current = "lead_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9);
       setForm(INITIAL);
       setRegistrationId(null);
       setStatus("sent");
@@ -498,6 +513,25 @@ export default function InternshipApply({ resumeLead }: { resumeLead?: ResumeLea
             <a href="mailto:pearllabsug@gmail.com" style={{ color: ORANGE }}>
               pearllabsug@gmail.com
             </a>.
+          </p>
+          <Link href="/" style={s.backLink}>← Back to Home</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Registration closed by staff ───────────────────────────────
+  // Checked here (not just in the API) so nothing renders a submittable form
+  // at all while full — the API route also rejects a direct POST as a
+  // second layer, since this is a display-only gate.
+  if (registrationFull) {
+    return (
+      <div style={s.page}>
+        <div style={s.successWrap}>
+          <h2 style={s.successTitle}>Registration Full</h2>
+          <p style={s.successText}>
+            {registrationFullMessage ||
+              "Registration is currently full. Email us at pearllabsug@gmail.com if you'd like to be added to a waitlist."}
           </p>
           <Link href="/" style={s.backLink}>← Back to Home</Link>
         </div>

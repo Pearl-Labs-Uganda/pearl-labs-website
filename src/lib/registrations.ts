@@ -79,8 +79,14 @@ function rowFromDb(raw: any): RegistrationRow {
   };
 }
 
-function paramsFromInput(input: RegistrationInput, amountDue: number, transactionId: string | null) {
+function paramsFromInput(
+  input: RegistrationInput,
+  amountDue: number,
+  transactionId: string | null,
+  sessionId: string | null,
+) {
   return {
+    session_id: sessionId,
     parent_name: input.parentName,
     relationship: input.relationship,
     profession: input.profession,
@@ -110,19 +116,36 @@ function paramsFromInput(input: RegistrationInput, amountDue: number, transactio
   };
 }
 
-export function saveRegistration(input: RegistrationInput, id?: number): RegistrationRow {
+export function saveRegistration(
+  input: RegistrationInput,
+  id?: number,
+  sessionId?: string,
+): RegistrationRow {
   const db = getDb();
   const now = new Date().toISOString();
   const amountDue = computeAmountDue(input.modules);
   const newTransactionId = normalizeTransactionId(input.transactionId);
+  const params = paramsFromInput(input, amountDue, newTransactionId, sessionId ?? null);
 
-  if (id != null) {
+  // A resubmit of the same in-progress registration (dropped response,
+  // double-click, retry after an error) carries the same client-generated
+  // sessionId — reuse that row's id instead of inserting a duplicate.
+  const targetId =
+    id ??
+    (sessionId
+      ? (db.prepare("SELECT id FROM registrations WHERE session_id = ?").get(sessionId) as
+          | { id: number }
+          | undefined)?.id
+      : undefined);
+
+  if (targetId != null) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = db.prepare("SELECT * FROM registrations WHERE id = ?").get(id) as any;
+    const existing = db.prepare("SELECT * FROM registrations WHERE id = ?").get(targetId) as any;
     if (existing) {
       db.prepare(
         `UPDATE registrations SET
-          updated_at = @updated_at, parent_name = @parent_name, relationship = @relationship,
+          updated_at = @updated_at, session_id = COALESCE(@session_id, session_id),
+          parent_name = @parent_name, relationship = @relationship,
           profession = @profession, phone = @phone, alt_phone = @alt_phone, email = @email,
           address = @address, student_name = @student_name, age = @age, gender = @gender,
           school = @school, class_grade = @class_grade, cohort = @cohort, has_laptop = @has_laptop,
@@ -133,9 +156,9 @@ export function saveRegistration(input: RegistrationInput, id?: number): Registr
           photo_consent = @photo_consent, payment_method = @payment_method,
           transaction_id = @transaction_id
         WHERE id = @id`,
-      ).run({ id, updated_at: now, ...paramsFromInput(input, amountDue, newTransactionId) });
+      ).run({ id: targetId, updated_at: now, ...params });
 
-      const updated = db.prepare("SELECT * FROM registrations WHERE id = ?").get(id);
+      const updated = db.prepare("SELECT * FROM registrations WHERE id = ?").get(targetId);
       return rowFromDb(updated);
     }
   }
@@ -143,20 +166,20 @@ export function saveRegistration(input: RegistrationInput, id?: number): Registr
   const info = db
     .prepare(
       `INSERT INTO registrations (
-        created_at, updated_at, parent_name, relationship, profession, phone, alt_phone,
+        created_at, updated_at, session_id, parent_name, relationship, profession, phone, alt_phone,
         email, address, student_name, age, gender, school, class_grade, cohort, has_laptop,
         modules, amount_due, hear_about, hear_about_other, pickup_service, pickup_location,
         medical_info, additional_info, agree_terms, photo_consent, payment_method,
         transaction_id, verified, verified_at
       ) VALUES (
-        @created_at, @updated_at, @parent_name, @relationship, @profession, @phone, @alt_phone,
+        @created_at, @updated_at, @session_id, @parent_name, @relationship, @profession, @phone, @alt_phone,
         @email, @address, @student_name, @age, @gender, @school, @class_grade, @cohort, @has_laptop,
         @modules, @amount_due, @hear_about, @hear_about_other, @pickup_service, @pickup_location,
         @medical_info, @additional_info, @agree_terms, @photo_consent, @payment_method,
         @transaction_id, 0, NULL
       )`,
     )
-    .run({ created_at: now, updated_at: now, ...paramsFromInput(input, amountDue, newTransactionId) });
+    .run({ created_at: now, updated_at: now, ...params });
 
   const created = db.prepare("SELECT * FROM registrations WHERE id = ?").get(info.lastInsertRowid);
   return rowFromDb(created);

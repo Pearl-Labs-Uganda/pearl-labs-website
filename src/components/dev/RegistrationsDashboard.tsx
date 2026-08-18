@@ -17,11 +17,14 @@ interface Props {
   eventCounts: EventCounts;
   incompleteLeads: IncompleteLeadRow[];
   dismissedLeads: IncompleteLeadRow[];
+  registrationFull: boolean;
+  registrationFullMessage: string;
   onMarkVerified: (id: number) => Promise<void>;
   onDeleteLead: (id: number) => Promise<void>;
   onRestoreLead: (id: number) => Promise<void>;
   onSetContacted: (id: number, contacted: boolean) => Promise<void>;
   onGenerateResumeLink: (id: number) => Promise<string | null>;
+  onSetRegistrationFull: (full: boolean, message: string) => Promise<void>;
 }
 
 function TabBar({
@@ -616,14 +619,19 @@ export default function RegistrationsDashboard({
   eventCounts,
   incompleteLeads,
   dismissedLeads,
+  registrationFull,
+  registrationFullMessage,
   onMarkVerified,
   onDeleteLead,
   onRestoreLead,
   onSetContacted,
   onGenerateResumeLink,
+  onSetRegistrationFull,
 }: Props) {
   const [view, setView] = useState<"analytics" | "registrations" | "leads">("analytics");
   const [showDismissed, setShowDismissed] = useState(false);
+  const [fullMessageDraft, setFullMessageDraft] = useState(registrationFullMessage);
+  const [savingFull, setSavingFull] = useState(false);
   // Rows saved before payment_method existed have "" — treat those as MoMo,
   // since MoMo was the only option at the time.
   const isCash = (r: RegistrationRow) => r.paymentMethod === "Cash";
@@ -636,6 +644,24 @@ export default function RegistrationsDashboard({
   // claiming a spot, verified or not.
   const reservedCount = awaiting.length + cashAwaiting.length + verified.length;
   const capacityPct = Math.min(100, Math.round((reservedCount / TOTAL_SPOTS) * 100));
+
+  const handleToggleFull = async () => {
+    setSavingFull(true);
+    try {
+      await onSetRegistrationFull(!registrationFull, fullMessageDraft);
+    } finally {
+      setSavingFull(false);
+    }
+  };
+
+  const handleSaveFullMessage = async () => {
+    setSavingFull(true);
+    try {
+      await onSetRegistrationFull(registrationFull, fullMessageDraft);
+    } finally {
+      setSavingFull(false);
+    }
+  };
   const conversionRate =
     registrations.length > 0 ? Math.round((verified.length / registrations.length) * 100) : 0;
   const laptopProvisionCount = registrations.filter((r) => r.hasLaptop && r.hasLaptop !== "Yes").length;
@@ -739,6 +765,81 @@ export default function RegistrationsDashboard({
             <p style={{ fontSize: 11.5, color: "#4C616C", marginTop: 8 }}>
               {verified.length} verified · {awaiting.length} awaiting MoMo confirmation · {cashAwaiting.length} paying cash
             </p>
+          </div>
+
+          <div
+            style={{
+              background: registrationFull ? "#FFF4EC" : "#fff",
+              border: `1px solid ${registrationFull ? ORANGE : BORDER}`,
+              borderRadius: 10,
+              padding: 16,
+              marginBottom: 20,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: GREEN }}>
+                  Public registration form
+                </div>
+                <div style={{ fontSize: 11.5, color: "#4C616C", marginTop: 2 }}>
+                  {registrationFull
+                    ? "Closed — the /apply form shows the message below instead of the form."
+                    : "Open — this is independent of the spots-reserved count above; toggle it yourself when you decide the bootcamp is full."}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleFull}
+                disabled={savingFull}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  padding: "8px 16px",
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: savingFull ? "default" : "pointer",
+                  opacity: savingFull ? 0.6 : 1,
+                  color: "#fff",
+                  background: registrationFull ? GREEN : ORANGE,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {registrationFull ? "Reopen registration" : "Declare spots full"}
+              </button>
+            </div>
+            <textarea
+              value={fullMessageDraft}
+              onChange={(e) => setFullMessageDraft(e.target.value)}
+              rows={2}
+              style={{
+                width: "100%",
+                fontSize: 12.5,
+                fontFamily: "inherit",
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: `1px solid ${BORDER}`,
+                resize: "vertical",
+                marginBottom: 8,
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSaveFullMessage}
+              disabled={savingFull || fullMessageDraft === registrationFullMessage}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "6px 12px",
+                borderRadius: 6,
+                border: `1px solid ${BORDER}`,
+                background: "none",
+                color: GREEN,
+                cursor: savingFull || fullMessageDraft === registrationFullMessage ? "default" : "pointer",
+                opacity: savingFull || fullMessageDraft === registrationFullMessage ? 0.5 : 1,
+              }}
+            >
+              Save message
+            </button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>

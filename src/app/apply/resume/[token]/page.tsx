@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getLeadByResumeToken, type IncompleteLeadRow } from "@/lib/leads";
 import InternshipApply, { type FormState } from "@/components/InternshipApply";
 import MicrosoftClarity from "@/components/MicrosoftClarity";
+import { getRegistrationCapacityStatus } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function ResumeApplicationPage({
 }) {
   const { token } = await params;
   const lead = getLeadByResumeToken(token);
+  const capacity = getRegistrationCapacityStatus();
 
   if (!lead) {
     return (
@@ -78,7 +80,11 @@ export default async function ResumeApplicationPage({
   return (
     <>
       <MicrosoftClarity />
-      <InternshipApply resumeLead={{ sessionId: lead.sessionId, form: leadToFormState(lead) }} />
+      <InternshipApply
+        resumeLead={{ sessionId: lead.sessionId, form: leadToFormState(lead) }}
+        registrationFull={capacity.full}
+        registrationFullMessage={capacity.message}
+      />
     </>
   );
 }
