@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { computeAmountDue } from "./fee";
 import { normalizeTransactionId } from "./transactionId";
+import { hasSiblingDiscount, type SiblingIdentity } from "./siblings";
 
 export type PaymentMethod = "MTN MoMo" | "Cash";
 
@@ -116,6 +117,23 @@ function paramsFromInput(
   };
 }
 
+export function existingSiblingIdentities(): SiblingIdentity[] {
+  const db = getDb();
+  return (
+    db.prepare("SELECT id, parent_name, phone, student_name FROM registrations").all() as {
+      id: number;
+      parent_name: string;
+      phone: string;
+      student_name: string;
+    }[]
+  ).map((row) => ({
+    id: row.id,
+    parentName: row.parent_name,
+    phone: row.phone,
+    studentName: row.student_name,
+  }));
+}
+
 export function saveRegistration(
   input: RegistrationInput,
   id?: number,
@@ -123,9 +141,6 @@ export function saveRegistration(
 ): RegistrationRow {
   const db = getDb();
   const now = new Date().toISOString();
-  const amountDue = computeAmountDue(input.modules);
-  const newTransactionId = normalizeTransactionId(input.transactionId);
-  const params = paramsFromInput(input, amountDue, newTransactionId, sessionId ?? null);
 
   // A resubmit of the same in-progress registration (dropped response,
   // double-click, retry after an error) carries the same client-generated
@@ -137,6 +152,19 @@ export function saveRegistration(
           | { id: number }
           | undefined)?.id
       : undefined);
+
+  // Server-authoritative: always recomputed here from the current DB state,
+  // never trusts anything the client sent. Excluding targetId keeps a
+  // resubmit of this same row from counting itself as its own sibling.
+  const siblingDiscount = hasSiblingDiscount(existingSiblingIdentities(), {
+    id: targetId,
+    parentName: input.parentName,
+    phone: input.phone,
+    studentName: input.studentName,
+  });
+  const amountDue = computeAmountDue(input.modules, siblingDiscount);
+  const newTransactionId = normalizeTransactionId(input.transactionId);
+  const params = paramsFromInput(input, amountDue, newTransactionId, sessionId ?? null);
 
   if (targetId != null) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

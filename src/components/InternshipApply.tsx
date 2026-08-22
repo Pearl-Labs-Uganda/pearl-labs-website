@@ -136,6 +136,9 @@ export default function InternshipApply({
   const [submitError, setSubmitError] = useState<string>("");
   const [focused, setFocused] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  // Best-effort live preview only — set from the lead-save response below.
+  // The actual charge is always recomputed server-side on final submit.
+  const [hasSiblingDiscount, setHasSiblingDiscount] = useState(false);
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
     1: false,
     2: false,
@@ -248,7 +251,10 @@ export default function InternshipApply({
           ...form,
         }),
         keepalive: true,
-      }).catch(() => {});
+      })
+        .then((res) => res.json())
+        .then((data) => setHasSiblingDiscount(!!data.hasSiblingDiscount))
+        .catch(() => {});
     }, 800);
 
     return () => clearTimeout(timer);
@@ -824,7 +830,9 @@ export default function InternshipApply({
             <div style={{ marginTop: 14 }}>
               <div style={s.amountBox}>
                 <span style={s.amountLabel}>Amount Due</span>
-                <span style={s.amountValue}>{formatUgx(computeAmountDue(form.modules))}</span>
+                <span style={s.amountValue}>
+                  {formatUgx(computeAmountDue(form.modules, hasSiblingDiscount))}
+                </span>
               </div>
 
               <div style={{ marginTop: 18 }}>

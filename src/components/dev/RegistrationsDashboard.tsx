@@ -5,6 +5,7 @@ import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
+import { computeSiblingReviewFlags } from "@/lib/siblings";
 import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown, Link2, UserCheck } from "lucide-react";
 
 const GREEN = "#002D5B";
@@ -99,10 +100,12 @@ function Row({
   row,
   showVerifyButton,
   onMarkVerified,
+  needsSiblingReview,
 }: {
   row: RegistrationRow;
   showVerifyButton: boolean;
   onMarkVerified: (id: number) => Promise<void>;
+  needsSiblingReview: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -135,7 +138,24 @@ function Row({
         <span style={{ fontWeight: 700, color: GREEN, fontSize: 14 }}>{row.studentName}</span>
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.parentName} · {row.phone}</span>
         <span style={{ fontSize: 12.5, color: "#4C616C" }}>{row.modules.join(", ")}</span>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: ORANGE }}>{formatUgx(row.amountDue)}</span>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: ORANGE }}>
+          {formatUgx(row.amountDue)}
+          {needsSiblingReview && (
+            <span
+              style={{
+                marginLeft: 8,
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: "#B3261E",
+                background: "#FCE8E6",
+                borderRadius: 6,
+                padding: "2px 6px",
+              }}
+            >
+              ⚠ Sibling discount — review
+            </span>
+          )}
+        </span>
         <span style={{ fontSize: 11, color: "#4C616C" }}>
           {row.paymentMethod || "Payment method not recorded"} · {formatDateTime(row.createdAt)}
         </span>
@@ -585,12 +605,14 @@ function Section({
   showVerifyButton,
   onMarkVerified,
   emptyText,
+  siblingReviewIds,
 }: {
   title: string;
   rows: RegistrationRow[];
   showVerifyButton: boolean;
   onMarkVerified: (id: number) => Promise<void>;
   emptyText: string;
+  siblingReviewIds: Set<number>;
 }) {
   return (
     <section style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, minWidth: 0 }}>
@@ -602,7 +624,13 @@ function Section({
           <p style={{ fontSize: 13, color: "#4C616C" }}>{emptyText}</p>
         ) : (
           rows.map((row) => (
-            <Row key={row.id} row={row} showVerifyButton={showVerifyButton} onMarkVerified={onMarkVerified} />
+            <Row
+              key={row.id}
+              row={row}
+              showVerifyButton={showVerifyButton}
+              onMarkVerified={onMarkVerified}
+              needsSiblingReview={siblingReviewIds.has(row.id)}
+            />
           ))
         )}
       </div>
@@ -639,6 +667,7 @@ export default function RegistrationsDashboard({
   const awaiting = registrations.filter((r) => !isCash(r) && r.transactionId && !r.verified);
   const cashAwaiting = registrations.filter((r) => isCash(r) && !r.verified);
   const verified = registrations.filter((r) => r.verified);
+  const siblingReviewIds = computeSiblingReviewFlags(registrations);
 
   // Choosing cash or giving a transaction ID both mean the family is
   // claiming a spot, verified or not.
@@ -856,6 +885,7 @@ export default function RegistrationsDashboard({
             showVerifyButton={false}
             onMarkVerified={onMarkVerified}
             emptyText="No registrations without a transaction ID."
+            siblingReviewIds={siblingReviewIds}
           />
           <Section
             title="Awaiting Verification"
@@ -863,6 +893,7 @@ export default function RegistrationsDashboard({
             showVerifyButton
             onMarkVerified={onMarkVerified}
             emptyText="Nothing waiting on verification."
+            siblingReviewIds={siblingReviewIds}
           />
           <Section
             title="Paying Cash"
@@ -870,6 +901,7 @@ export default function RegistrationsDashboard({
             showVerifyButton
             onMarkVerified={onMarkVerified}
             emptyText="No one has chosen to pay cash yet."
+            siblingReviewIds={siblingReviewIds}
           />
           <Section
             title="Verified"
@@ -877,6 +909,7 @@ export default function RegistrationsDashboard({
             showVerifyButton={false}
             onMarkVerified={onMarkVerified}
             emptyText="No verified registrations yet."
+            siblingReviewIds={siblingReviewIds}
           />
         </div>
       ) : (

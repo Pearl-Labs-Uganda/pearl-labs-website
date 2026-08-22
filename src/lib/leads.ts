@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { getDb } from "./db";
 import { computeAmountDue } from "./fee";
+import { existingSiblingIdentities } from "./registrations";
+import { hasSiblingDiscount } from "./siblings";
 
 export interface IncompleteLeadInput {
   sessionId: string;
@@ -116,11 +118,21 @@ function textOrNull(value: string | undefined): string | null {
   return value?.trim() || null;
 }
 
-export function saveIncompleteLead(input: IncompleteLeadInput): IncompleteLeadRow {
+export function saveIncompleteLead(
+  input: IncompleteLeadInput,
+): IncompleteLeadRow & { hasSiblingDiscount: boolean } {
   const db = getDb();
   const now = new Date().toISOString();
   const modulesList = input.modules ?? [];
-  const amountDue = computeAmountDue(modulesList);
+  // Sibling discount is checked against real registrations, not other
+  // in-progress leads — this is a live preview, so it's fine for it to lag
+  // behind another parent's still-incomplete second-kid form.
+  const siblingDiscount = hasSiblingDiscount(existingSiblingIdentities(), {
+    parentName: input.parentName ?? "",
+    phone: input.phone,
+    studentName: input.studentName ?? "",
+  });
+  const amountDue = computeAmountDue(modulesList, siblingDiscount);
 
   const params = {
     session_id: input.sessionId,
@@ -192,7 +204,7 @@ export function saveIncompleteLead(input: IncompleteLeadInput): IncompleteLeadRo
     const updated = db
       .prepare("SELECT * FROM incomplete_registrations WHERE session_id = ?")
       .get(input.sessionId);
-    return rowFromDb(updated);
+    return { ...rowFromDb(updated), hasSiblingDiscount: siblingDiscount };
   }
 
   const info = db
@@ -218,7 +230,7 @@ export function saveIncompleteLead(input: IncompleteLeadInput): IncompleteLeadRo
   const created = db
     .prepare("SELECT * FROM incomplete_registrations WHERE id = ?")
     .get(info.lastInsertRowid);
-  return rowFromDb(created);
+  return { ...rowFromDb(created), hasSiblingDiscount: siblingDiscount };
 }
 
 export function markLeadSubmitted(sessionId: string): void {

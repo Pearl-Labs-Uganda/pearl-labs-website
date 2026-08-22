@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       modules: Array.isArray(body.modules) ? body.modules : [],
     });
 
-    return NextResponse.json({ ok: true, id: lead.id });
+    return NextResponse.json({ ok: true, id: lead.id, hasSiblingDiscount: lead.hasSiblingDiscount });
   } catch (error) {
     console.error("Failed to save incomplete lead:", error);
     return NextResponse.json(
