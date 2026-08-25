@@ -6,7 +6,8 @@ import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
 import { formatUgx, MODULE_NAMES } from "@/lib/fee";
 import { computeSiblingReviewFlags } from "@/lib/siblings";
-import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown, Link2, UserCheck } from "lucide-react";
+import { Phone, MessageSquare, Trash2, Copy, Check, RotateCcw, ChevronDown, Link2, UserCheck, Download } from "lucide-react";
+import { downloadRegistrationsCsv } from "@/lib/exportCsv";
 
 const GREEN = "#002D5B";
 const ORANGE = "#EF8633";
@@ -724,9 +725,44 @@ export default function RegistrationsDashboard({
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 24px 96px", fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, marginBottom: 24 }}>
-        Bootcamp Registrations &amp; Analytics
-      </h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+          marginBottom: 24,
+        }}
+      >
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, margin: 0 }}>
+          Bootcamp Registrations &amp; Analytics
+        </h1>
+        <button
+          type="button"
+          onClick={() => downloadRegistrationsCsv(registrations)}
+          disabled={registrations.length === 0}
+          title="Export all registrations to CSV"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 16px",
+            background: GREEN,
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: registrations.length === 0 ? "not-allowed" : "pointer",
+            opacity: registrations.length === 0 ? 0.6 : 1,
+            fontFamily: "inherit",
+          }}
+        >
+          <Download size={15} />
+          Export CSV ({registrations.length})
+        </button>
+      </div>
 
       <TabBar
         active={view}
@@ -878,39 +914,78 @@ export default function RegistrationsDashboard({
           </div>
         </>
       ) : view === "registrations" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 20, alignItems: "start" }}>
-          <Section
-            title="Unpaid"
-            rows={unpaid}
-            showVerifyButton={false}
-            onMarkVerified={onMarkVerified}
-            emptyText="No registrations without a transaction ID."
-            siblingReviewIds={siblingReviewIds}
-          />
-          <Section
-            title="Awaiting Verification"
-            rows={awaiting}
-            showVerifyButton
-            onMarkVerified={onMarkVerified}
-            emptyText="Nothing waiting on verification."
-            siblingReviewIds={siblingReviewIds}
-          />
-          <Section
-            title="Paying Cash"
-            rows={cashAwaiting}
-            showVerifyButton
-            onMarkVerified={onMarkVerified}
-            emptyText="No one has chosen to pay cash yet."
-            siblingReviewIds={siblingReviewIds}
-          />
-          <Section
-            title="Verified"
-            rows={verified}
-            showVerifyButton={false}
-            onMarkVerified={onMarkVerified}
-            emptyText="No verified registrations yet."
-            siblingReviewIds={siblingReviewIds}
-          />
+        <div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <p style={{ fontSize: 13, color: "#4C616C", margin: 0 }}>
+              Showing {registrations.length} registrations across all payment &amp; verification stages.
+            </p>
+            <button
+              type="button"
+              onClick={() => downloadRegistrationsCsv(registrations)}
+              disabled={registrations.length === 0}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                background: "#fff",
+                color: GREEN,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: registrations.length === 0 ? "not-allowed" : "pointer",
+                opacity: registrations.length === 0 ? 0.6 : 1,
+                fontFamily: "inherit",
+              }}
+            >
+              <Download size={14} />
+              Export to CSV
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 20, alignItems: "start" }}>
+            <Section
+              title="Unpaid"
+              rows={unpaid}
+              showVerifyButton={false}
+              onMarkVerified={onMarkVerified}
+              emptyText="No registrations without a transaction ID."
+              siblingReviewIds={siblingReviewIds}
+            />
+            <Section
+              title="Awaiting Verification"
+              rows={awaiting}
+              showVerifyButton
+              onMarkVerified={onMarkVerified}
+              emptyText="Nothing waiting on verification."
+              siblingReviewIds={siblingReviewIds}
+            />
+            <Section
+              title="Paying Cash"
+              rows={cashAwaiting}
+              showVerifyButton
+              onMarkVerified={onMarkVerified}
+              emptyText="No one has chosen to pay cash yet."
+              siblingReviewIds={siblingReviewIds}
+            />
+            <Section
+              title="Verified"
+              rows={verified}
+              showVerifyButton={false}
+              onMarkVerified={onMarkVerified}
+              emptyText="No verified registrations yet."
+              siblingReviewIds={siblingReviewIds}
+            />
+          </div>
         </div>
       ) : (
         <div>
