@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
         destination: "/bootcamps",
         permanent: true,
       },
+      // Temporary: bootcamp page hidden while the aerospace bootcamp lives on kate-d.com.
+      // Remove this entry to bring /bootcamps back.
+      {
+        source: "/bootcamps",
+        destination: "https://kate-d.com/bootcamps/aerospace/",
+        permanent: false,
+      },
     ];
   },
 };
