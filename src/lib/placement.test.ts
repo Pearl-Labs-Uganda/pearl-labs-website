@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  availabilityText, createRateLimiter, emailAttachmentPlan, emptyFields, fieldErrors, fileProblem, filesProblem,
+  availabilityText, clientKey, createRateLimiter, emailAttachmentPlan, emptyFields, fieldErrors, fileProblem, filesProblem,
   safeFileName, toRow, type PlacementFields,
 } from "./placement.ts";
 
@@ -84,4 +84,11 @@ test("rate limit: 5 an hour per key", () => {
   assert.equal(allow("ip", 2000), false);
   assert.equal(allow("other", 2000), true);
   assert.equal(allow("ip", 1005 + 3600_000), true);
+});
+
+test("rate-limit key is the hop nginx added, not one the sender typed", () => {
+  assert.equal(clientKey("6.6.6.6, 41.210.1.2", null), "41.210.1.2");
+  assert.equal(clientKey("41.210.1.2", null), "41.210.1.2");
+  assert.equal(clientKey(null, "41.210.1.3"), "41.210.1.3");
+  assert.equal(clientKey(null, null), "unknown");
 });

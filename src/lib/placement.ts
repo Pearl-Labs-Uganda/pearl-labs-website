@@ -152,6 +152,14 @@ export function emailAttachmentPlan(sizes: number[], budget = EMAIL_ATTACH_BUDGE
   return { attach, skip };
 }
 
+// Who is sending, for the rate limit. nginx appends the real client address as the LAST
+// X-Forwarded-For entry (anything before it came from the sender and can be faked); X-Real-IP
+// is the fallback.
+export function clientKey(forwardedFor: string | null, realIp: string | null): string {
+  const hops = (forwardedFor ?? "").split(",").map((h) => h.trim()).filter(Boolean);
+  return hops[hops.length - 1] || realIp?.trim() || "unknown";
+}
+
 // In-memory per-key limit (the site runs as one pm2 process).
 export function createRateLimiter(limit: number, windowMs: number) {
   const hits = new Map<string, number[]>();

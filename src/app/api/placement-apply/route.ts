@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import {
+  clientKey,
   contentTypeFor,
   createRateLimiter,
   fieldErrors,
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   // Bots fill the hidden field; tell them it worked and keep nothing.
   if (String(form.get("website") ?? "").trim()) return NextResponse.json({ ok: true });
 
-  const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const ip = clientKey(request.headers.get("x-forwarded-for"), request.headers.get("x-real-ip"));
   if (!allow(ip)) {
     return NextResponse.json(
       { error: "Too many applications from this connection — please try again later." },
