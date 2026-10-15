@@ -38,7 +38,13 @@ export default function Navbar() {
     { href: "#services", label: "Services" },
     { href: "#researchers", label: "Researchers" },
     { href: "#try-models", label: "Try Models" },
-    { label: "Opportunities", dropdown: [{ href: "/bootcamps", label: "Bootcamps" }] },
+    {
+      label: "Opportunities",
+      dropdown: [
+        { href: "/bootcamps", label: "Bootcamps" },
+        { href: "/internships", label: "Internships" },
+      ],
+    },
     { href: "/portfolio", label: "Portfolio" },
   ];
 

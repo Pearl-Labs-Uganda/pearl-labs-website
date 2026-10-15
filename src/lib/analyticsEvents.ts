@@ -6,6 +6,10 @@ export const EVENT_TYPES = [
   "form_started",
   "form_submitted",
   "momo_code_copied",
+  // /internships (InternshipPlacement.tsx)
+  "internship_view",
+  "internship_started",
+  "internship_submitted",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
