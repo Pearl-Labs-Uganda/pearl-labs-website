@@ -5,7 +5,7 @@
 export const TRACKS = { ai: "AI", robotics: "Robotics" } as const;
 export const DAYS = [["mon", "Mon"], ["tue", "Tue"], ["wed", "Wed"], ["thu", "Thu"], ["fri", "Fri"], ["sat", "Sat"]] as const;
 export const TIMES = { morning: "Morning", afternoon: "Afternoon", full_day: "Full day" } as const;
-export const GENDERS = ["Male", "Female", "Prefer not to say"] as const;
+export const GENDERS = ["Male", "Female"] as const;
 export const TEXT_MAX = 1500;
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const MAX_OTHER_FILES = 3;

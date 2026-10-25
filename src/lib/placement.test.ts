@@ -23,6 +23,7 @@ test("required fields, formats and limits", () => {
   assert.ok(fieldErrors(good({ email: "jane@" })).email);
   assert.ok(fieldErrors(good({ phone: "12345" })).phone);
   assert.ok(fieldErrors(good({ gender: "Other" })).gender);
+  assert.ok(fieldErrors(good({ gender: "Prefer not to say" })).gender);
   assert.ok(fieldErrors(good({ track: "aerospace" })).track);
   assert.ok(fieldErrors(good({ days: [] })).days);
   assert.ok(fieldErrors(good({ days: ["sun"] })).days);
