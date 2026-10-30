@@ -41,8 +41,8 @@ const projects = [
     description:
       "A low-cost autonomous rover built by our 2026 interns. Its navigation policy was trained with reinforcement learning in a Unity digital twin and runs on an NVIDIA Jetson Orin Nano, behind a five-guard safety layer. It reached its target in about 80% of runs in the densest obstacle course.",
     badge: "REPORT",
-    link: "/reports/eams-autonomous-rover-report.pdf",
-    linkLabel: "Read the report (PDF)",
+    link: "/projects/eams",
+    linkLabel: "Read the report",
   },
 ];
 
@@ -128,7 +128,6 @@ export default function Projects() {
             {project.link ? (
               <a
                 href={project.link}
-                {...("linkLabel" in project ? { target: "_blank", rel: "noopener" } : {})}
                 className="text-[.9rem] font-semibold text-green transition-colors duration-200 hover:text-orange"
               >
                 {"linkLabel" in project ? project.linkLabel : "Visit project"}
