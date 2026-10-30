@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Brain, Mic, Bot } from "lucide-react";
+import { Brain, Mic, Bot, Car } from "lucide-react";
 
 const projects = [
   {
@@ -32,6 +32,17 @@ const projects = [
     description:
       "Hands-on research into robotic arm systems, focusing on training robots to perform physical tasks through machine learning. Pearl Labs is building the foundations for industrial and educational robotics in Uganda.",
     badge: "IN RESEARCH",
+  },
+  {
+    icon: Car,
+    tag: "Embodied AI & Robotics",
+    title: "EAMS",
+    subtitle: "Engineering Autonomous Mobility System",
+    description:
+      "A low-cost autonomous rover built by our 2026 interns. Its navigation policy was trained with reinforcement learning in a Unity digital twin and runs on an NVIDIA Jetson Orin Nano, behind a five-guard safety layer. It reached its target in about 80% of runs in the densest obstacle course.",
+    badge: "REPORT",
+    link: "/reports/eams-autonomous-rover-report.pdf",
+    linkLabel: "Read the report (PDF)",
   },
 ];
 
@@ -80,7 +91,7 @@ export default function Projects() {
         </h2>
         <p className="font-body text-[.98rem] font-light text-text-mid max-w-[520px] leading-relaxed">
           Two focused tracks pushing the frontier — institutional AI foundations
-          and physical intelligence in machines.
+          and physical intelligence in machines. Our reports are free to read.
         </p>
       </div>
 
@@ -117,9 +128,10 @@ export default function Projects() {
             {project.link ? (
               <a
                 href={project.link}
+                {...("linkLabel" in project ? { target: "_blank", rel: "noopener" } : {})}
                 className="text-[.9rem] font-semibold text-green transition-colors duration-200 hover:text-orange"
               >
-                Visit project
+                {"linkLabel" in project ? project.linkLabel : "Visit project"}
               </a>
             ) : null}
           </div>
