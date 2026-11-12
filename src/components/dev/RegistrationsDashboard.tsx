@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { RegistrationRow } from "@/lib/registrations";
 import type { EventCounts } from "@/lib/analyticsEvents";
 import type { IncompleteLeadRow } from "@/lib/leads";
@@ -738,6 +739,12 @@ export default function RegistrationsDashboard({
         <h1 style={{ fontSize: 26, fontWeight: 800, color: GREEN, margin: 0 }}>
           Bootcamp Registrations &amp; Analytics
         </h1>
+        <Link
+          href="/pl-a9004ed60a/hackathon"
+          style={{ fontSize: 13, fontWeight: 700, color: ORANGE, textDecoration: "none", marginLeft: "auto" }}
+        >
+          Hackathon pre-registrations →
+        </Link>
         <button
           type="button"
           onClick={() => downloadRegistrationsCsv(registrations)}

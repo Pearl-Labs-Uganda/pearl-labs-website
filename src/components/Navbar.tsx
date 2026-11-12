@@ -43,6 +43,7 @@ export default function Navbar() {
       dropdown: [
         { href: "/bootcamps", label: "Bootcamps" },
         { href: "/internships", label: "Internships" },
+        { href: "/hackathon", label: "Hackathon" },
       ],
     },
     { href: "/portfolio", label: "Portfolio" },

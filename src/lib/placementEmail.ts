@@ -11,7 +11,7 @@ export interface LoadedFile {
 
 const WORKSPACE = "https://workspace.pearllabs.ug";
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -20,7 +20,7 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function transport() {
+export function transport() {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   if (!user || !pass) throw new Error("Email server is not configured. Set SMTP_USER and SMTP_PASS.");

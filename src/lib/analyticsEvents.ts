@@ -10,6 +10,10 @@ export const EVENT_TYPES = [
   "internship_view",
   "internship_started",
   "internship_submitted",
+  // /hackathon (HackathonRegister.tsx)
+  "hackathon_view",
+  "hackathon_started",
+  "hackathon_submitted",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 

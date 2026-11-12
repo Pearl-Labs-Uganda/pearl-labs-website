@@ -62,6 +62,30 @@ CREATE TABLE IF NOT EXISTS incomplete_registrations (
   updated_at TEXT NOT NULL,
   submitted INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS hackathon_registrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT UNIQUE,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  learner_name TEXT NOT NULL,
+  age TEXT NOT NULL,
+  gender TEXT NOT NULL,
+  school TEXT NOT NULL,
+  class_grade TEXT NOT NULL,
+  parent_name TEXT NOT NULL,
+  relationship TEXT NOT NULL,
+  parent_phone TEXT NOT NULL,
+  parent_email TEXT NOT NULL,
+  week TEXT NOT NULL,
+  interests TEXT NOT NULL,
+  has_laptop TEXT NOT NULL,
+  trip TEXT NOT NULL,
+  passport TEXT NOT NULL,
+  hear_about TEXT NOT NULL,
+  parent_consent INTEGER NOT NULL,
+  photo_consent TEXT NOT NULL
+);
 `;
 
 // Columns added after incomplete_registrations already existed in production —
