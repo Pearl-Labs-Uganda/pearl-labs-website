@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { preflight, siteFromRequest, withCors } from "@/lib/cors";
 import { clientKey, createRateLimiter } from "@/lib/placement";
 import { leadFields, leadPhoneReady, type Step } from "@/lib/hackathon";
 import { saveHackathonLead } from "@/lib/hackathonStore";
@@ -10,7 +11,7 @@ const allow = createRateLimiter(300, 60 * 60 * 1000);
 
 // Saves an unfinished form as soon as the parent's phone has 10 digits, so staff can follow up
 // with anyone who stops on the way. Never fails loudly: the family shouldn't notice it.
-export async function POST(request: Request) {
+async function handle(request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || (typeof body.website === "string" && body.website.trim())) return NextResponse.json({ ok: true });
 
@@ -23,10 +24,18 @@ export async function POST(request: Request) {
   const step: Step = body.step === 1 || body.step === 2 ? body.step : 0;
 
   try {
-    saveHackathonLead(sessionId, fields, step);
+    saveHackathonLead(sessionId, fields, step, siteFromRequest(request));
   } catch (error) {
     console.error("Hackathon lead not saved:", error);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
+}
+
+export async function POST(request: Request) {
+  return withCors(request, await handle(request));
+}
+
+export function OPTIONS(request: Request) {
+  return preflight(request);
 }

@@ -152,6 +152,12 @@ const REGISTRATIONS_MIGRATION_COLUMNS: Record<string, string> = {
 // A random link token per registration, so a family can add their MoMo transaction ID later.
 const HACKATHON_SIGNUP_MIGRATION_COLUMNS: Record<string, string> = {
   pay_token: "TEXT",
+  site: "TEXT NOT NULL DEFAULT 'pearllabs.ug'",
+};
+
+// Which website the family used (the same form runs on more than one site).
+const HACKATHON_LEAD_MIGRATION_COLUMNS: Record<string, string> = {
+  site: "TEXT NOT NULL DEFAULT 'pearllabs.ug'",
 };
 
 const ANALYTICS_MIGRATION_COLUMNS: Record<string, string> = {
@@ -189,6 +195,7 @@ export function getDb(): Database.Database {
   migrateColumns(instance, "registrations", REGISTRATIONS_MIGRATION_COLUMNS);
   migrateColumns(instance, "analytics_events", ANALYTICS_MIGRATION_COLUMNS);
   migrateColumns(instance, "hackathon_signups", HACKATHON_SIGNUP_MIGRATION_COLUMNS);
+  migrateColumns(instance, "hackathon_leads", HACKATHON_LEAD_MIGRATION_COLUMNS);
   return instance;
 }
 

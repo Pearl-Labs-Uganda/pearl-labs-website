@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { preflight, withCors } from "@/lib/cors";
 import { clientKey, createRateLimiter } from "@/lib/placement";
 import { isMomoTransactionId } from "@/lib/hackathon";
 import { isPayToken, setTransactionIdByPayToken } from "@/lib/hackathonStore";
@@ -9,7 +10,7 @@ export const runtime = "nodejs";
 const allow = createRateLimiter(20, 60 * 60 * 1000);
 
 // A family adds (or corrects) their MoMo transaction ID through their own pay link.
-export async function POST(request: Request) {
+async function handle(request: Request): Promise<Response> {
   const ip = clientKey(request.headers.get("x-forwarded-for"), request.headers.get("x-real-ip"));
   if (!allow(ip)) return NextResponse.json({ error: "Too many tries — please wait a while." }, { status: 429 });
 
@@ -34,4 +35,12 @@ export async function POST(request: Request) {
     console.error("Hackathon 'MoMo ID added' email to Pearl failed:", error);
   }
   return NextResponse.json({ ok: true });
+}
+
+export async function POST(request: Request) {
+  return withCors(request, await handle(request));
+}
+
+export function OPTIONS(request: Request) {
+  return preflight(request);
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { preflight, siteFromRequest, withCors } from "@/lib/cors";
 import { clientKey, createRateLimiter } from "@/lib/placement";
 import { cleanFields, fieldErrors, readFields } from "@/lib/hackathon";
 import { markHackathonLeadSubmitted, saveHackathonSignup } from "@/lib/hackathonStore";
@@ -9,7 +10,7 @@ export const runtime = "nodejs";
 // A parent may register several children from one phone, so this is looser than internships.
 const allow = createRateLimiter(15, 60 * 60 * 1000);
 
-export async function POST(request: Request) {
+async function handle(request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "We couldn't read the form — please try again." }, { status: 400 });
 
@@ -31,9 +32,10 @@ export async function POST(request: Request) {
   const sessionId =
     typeof body.sessionId === "string" && /^[A-Za-z0-9_-]{8,80}$/.test(body.sessionId) ? body.sessionId : null;
 
+  const site = siteFromRequest(request);
   let saved: { id: number; isNew: boolean; payToken: string } | null = null;
   try {
-    saved = saveHackathonSignup(fields, sessionId);
+    saved = saveHackathonSignup(fields, sessionId, site);
     if (sessionId) markHackathonLeadSubmitted(sessionId);
   } catch (error) {
     console.error("Hackathon registration NOT saved:", error);
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
 
   let staffEmailed = false;
   try {
-    await sendHackathonStaffEmail(fields, !!saved);
+    await sendHackathonStaffEmail(fields, !!saved, site);
     staffEmailed = true;
   } catch (error) {
     console.error("Hackathon registration email to Pearl failed:", error);
@@ -67,4 +69,12 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ ok: true, payToken });
+}
+
+export async function POST(request: Request) {
+  return withCors(request, await handle(request));
+}
+
+export function OPTIONS(request: Request) {
+  return preflight(request);
 }

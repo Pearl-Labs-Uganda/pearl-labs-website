@@ -17,6 +17,11 @@ export const INTERESTS = {
 } as const;
 export const RELATIONSHIPS = ["Mother", "Father", "Guardian"] as const;
 
+// The websites the form runs on. Anything else is recorded as the main site.
+export const SITES = ["pearllabs.ug", "kate-d.com"] as const;
+export type Site = (typeof SITES)[number];
+export const readSite = (v: unknown): Site => ((SITES as readonly unknown[]).includes(v) ? (v as Site) : "pearllabs.ug");
+
 export interface HackathonFields {
   // 1 · Parent
   parentName: string;
@@ -53,6 +58,7 @@ export const CHILD_AND_PAYMENT_KEYS = [...STEP_KEYS[1], ...STEP_KEYS[2]];
 
 export interface HackathonRow extends HackathonFields {
   id: number;
+  site: Site;
   payToken: string | null;
   amountDue: number;
   verified: boolean;
@@ -179,6 +185,7 @@ export const samePhone = (a: string, b: string) => {
 
 export interface HackathonLead {
   id: number;
+  site: Site;
   step: Step; // furthest step reached
   fields: HackathonFields;
   contacted: boolean;
@@ -240,14 +247,14 @@ export function hackathonCsv(rows: HackathonRow[]): string {
   const headers = [
     "Registered", "Child", "Age", "Gender", "School", "Class", "Week", "Interests", "Has laptop", "Trip",
     "Passport", "Photo consent", "Parent / guardian", "Relationship", "Phone", "Email", "Amount (UGX)",
-    "Payment method", "Transaction ID", "Status",
+    "Payment method", "Transaction ID", "Status", "Site",
   ];
   const lines = rows.map((r) =>
     [
       r.createdAt.slice(0, 16).replace("T", " "), r.learnerName, r.age, r.gender, r.school, r.classGrade,
       weekLabel(r.week), interestsText(r.interests), r.hasLaptop, r.trip, r.passport, r.photoConsent,
       r.parentName, r.relationship, r.parentPhone, r.parentEmail, r.amountDue, r.paymentMethod,
-      r.transactionId, paymentStatus(r),
+      r.transactionId, paymentStatus(r), r.site,
     ].map(csvCell).join(","),
   );
   return "﻿" + [headers.map(csvCell).join(","), ...lines].join("\r\n");

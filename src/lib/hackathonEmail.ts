@@ -1,5 +1,5 @@
 import { escapeHtml, transport } from "@/lib/placementEmail";
-import { FEE_UGX, formatUgx, summaryRows, weekLabel, type HackathonFields, type HackathonRow } from "@/lib/hackathon";
+import { FEE_UGX, formatUgx, summaryRows, weekLabel, type HackathonFields, type HackathonRow, type Site } from "@/lib/hackathon";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pearllabs.ug";
 const STAFF_PAGE = `${SITE}/pl-ac/hackathon`;
@@ -7,9 +7,9 @@ export const payLink = (token: string) => `${SITE}/hackathon/pay/${token}`;
 const staffInbox = (user: string) => process.env.HACKATHON_TO_EMAIL ?? process.env.INTERNSHIP_TO_EMAIL ?? user;
 
 // To Pearl: a backup copy of every registration (the database is the main record).
-export async function sendHackathonStaffEmail(f: HackathonFields, saved: boolean) {
+export async function sendHackathonStaffEmail(f: HackathonFields, saved: boolean, site: Site) {
   const { user, mailer } = transport();
-  const rows = summaryRows(f);
+  const rows: [string, string][] = [...summaryRows(f), ["Registered on", site]];
   const where = saved
     ? `Check the payment and see everyone: ${STAFF_PAGE}`
     : "⚠ This registration could NOT be saved to the website database — this email is the only copy.";

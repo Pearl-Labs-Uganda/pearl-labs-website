@@ -121,7 +121,10 @@ function LearnerRow({ r, onSetVerified }: { r: HackathonRow; onSetVerified: Prop
     <div className={`hk-row${open ? " is-open" : ""}`}>
       <button type="button" className="hk-row-main" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         <span className="hk-cell hk-child">
-          <strong>{r.learnerName}</strong>
+          <strong>
+            {r.learnerName}
+            {r.site !== "pearllabs.ug" && <span className="hk-site">via {r.site}</span>}
+          </strong>
           <small>
             {r.age} yrs · {r.classGrade} · {r.school}
           </small>
@@ -200,7 +203,10 @@ function LeadRow({ lead, onSetLeadFlag }: { lead: HackathonLead; onSetLeadFlag: 
     <div className={`hk-row hk-lead${lead.contacted ? " is-contacted" : ""}`}>
       <button type="button" className="hk-row-main hk-lead-main" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         <span className="hk-cell hk-child">
-          <strong>{f.parentName || "No name yet"}</strong>
+          <strong>
+            {f.parentName || "No name yet"}
+            {lead.site !== "pearllabs.ug" && <span className="hk-site">via {lead.site}</span>}
+          </strong>
           <small>
             {f.parentPhone}
             {f.learnerName ? ` · for ${f.learnerName}` : ""}
@@ -308,6 +314,7 @@ export default function HackathonDashboard({ rows, leads, dismissedLeads, funnel
         .map(([k, name]) => ({ name, count: rows.filter((r) => r.interests.includes(k)).length }))
         .sort((a, b) => b.count - a.count),
       gender: tally(rows.map((r) => r.gender)),
+      sites: tally(rows.map((r) => r.site)),
     };
   }, [rows]);
 
@@ -315,7 +322,7 @@ export default function HackathonDashboard({ rows, leads, dismissedLeads, funnel
   const shown = rows.filter(
     (r) =>
       (filter === "All" || paymentStatus(r) === filter) &&
-      (!q || [r.learnerName, r.school, r.parentName, r.parentPhone, r.transactionId].some((v) => v.toLowerCase().includes(q))),
+      (!q || [r.learnerName, r.school, r.parentName, r.parentPhone, r.transactionId, r.site].some((v) => v.toLowerCase().includes(q))),
   );
   const matchLead = (l: HackathonLead) =>
     !q || [l.fields.parentName, l.fields.parentPhone, l.fields.learnerName, l.fields.school].some((v) => v.toLowerCase().includes(q));
@@ -446,6 +453,8 @@ export default function HackathonDashboard({ rows, leads, dismissedLeads, funnel
             <Bars items={stats.interests} />
             <h3>Gender</h3>
             <Bars items={stats.gender} />
+            <h3>Registered on</h3>
+            <Bars items={stats.sites} />
           </div>
         </section>
 
@@ -555,6 +564,7 @@ const css = `
 .hk-lead.is-contacted{ opacity:.75; }
 .hk-dismissed{ padding:12px 0 0; border-top:1px solid var(--line); }
 .hk-link{ background:none; border:none; padding:0 18px; font:inherit; font-size:12.5px; font-weight:700; color:var(--muted); text-decoration:underline; cursor:pointer; margin-bottom:8px; }
+.hk-site{ display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; background:#EEF2FF; color:#3B4BA8; font-size:11px; font-weight:700; vertical-align:middle; }
 .hk-pill-need{ background:#FDECEC; color:#B03A2E; }
 button.hk-icon{ cursor:pointer; padding:0; }
 .hk-kpi{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; min-width:0; }

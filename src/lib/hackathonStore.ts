@@ -3,10 +3,12 @@ import { getDb } from "./db";
 import {
   FEE_UGX,
   emptyFields,
+  readSite,
   samePhone,
   type HackathonFields,
   type HackathonLead,
   type HackathonRow,
+  type Site,
   type Step,
 } from "./hackathon";
 
@@ -36,6 +38,7 @@ interface RawRow {
   verified: number;
   verified_at: string | null;
   pay_token: string | null;
+  site: string;
 }
 
 function fromRaw(r: RawRow): HackathonRow {
@@ -45,6 +48,7 @@ function fromRaw(r: RawRow): HackathonRow {
   } catch {}
   return {
     id: r.id,
+    site: readSite(r.site),
     payToken: r.pay_token,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -78,6 +82,7 @@ function fromRaw(r: RawRow): HackathonRow {
 export function saveHackathonSignup(
   f: HackathonFields,
   sessionId: string | null,
+  site: Site = "pearllabs.ug",
 ): { id: number; isNew: boolean; payToken: string } {
   const db = getDb();
   const params = {
@@ -103,6 +108,7 @@ export function saveHackathonSignup(
     transaction_id: f.transactionId || null,
     amount_due: FEE_UGX,
     pay_token: randomBytes(24).toString("hex"),
+    site,
   };
   const existing = sessionId
     ? (db.prepare("SELECT id, pay_token FROM hackathon_signups WHERE session_id = ?").get(sessionId) as
@@ -127,10 +133,10 @@ export function saveHackathonSignup(
     .prepare(
       `INSERT INTO hackathon_signups (session_id, created_at, updated_at, parent_name, relationship, parent_phone,
         parent_email, learner_name, age, gender, school, class_grade, week, interests, has_laptop, trip, passport,
-        photo_consent, parent_consent, payment_method, transaction_id, amount_due, pay_token)
+        photo_consent, parent_consent, payment_method, transaction_id, amount_due, pay_token, site)
        VALUES (@session_id, @now, @now, @parent_name, @relationship, @parent_phone, @parent_email, @learner_name,
         @age, @gender, @school, @class_grade, @week, @interests, @has_laptop, @trip, @passport, @photo_consent,
-        @parent_consent, @payment_method, @transaction_id, @amount_due, @pay_token)`,
+        @parent_consent, @payment_method, @transaction_id, @amount_due, @pay_token, @site)`,
     )
     .run(params);
   return { id: Number(result.lastInsertRowid), isNew: true, payToken: params.pay_token };
@@ -183,6 +189,7 @@ interface RawLead {
   updated_at: string;
   contacted: number;
   dismissed: number;
+  site: string;
 }
 
 function leadFromRaw(r: RawLead): HackathonLead {
@@ -192,6 +199,7 @@ function leadFromRaw(r: RawLead): HackathonLead {
   } catch {}
   return {
     id: r.id,
+    site: readSite(r.site),
     step: (r.step === 1 || r.step === 2 ? r.step : 0) as Step,
     fields,
     contacted: !!r.contacted,
@@ -202,17 +210,17 @@ function leadFromRaw(r: RawLead): HackathonLead {
 }
 
 // Upserts the draft by session; a lead that already became a registration is left alone.
-export function saveHackathonLead(sessionId: string, f: HackathonFields, step: Step): void {
+export function saveHackathonLead(sessionId: string, f: HackathonFields, step: Step, site: Site = "pearllabs.ug"): void {
   const now = new Date().toISOString();
   getDb()
     .prepare(
-      `INSERT INTO hackathon_leads (session_id, phone, data, step, created_at, updated_at)
-       VALUES (@session_id, @phone, @data, @step, @now, @now)
+      `INSERT INTO hackathon_leads (session_id, phone, data, step, created_at, updated_at, site)
+       VALUES (@session_id, @phone, @data, @step, @now, @now, @site)
        ON CONFLICT(session_id) DO UPDATE SET phone = @phone, data = @data,
          step = MAX(step, @step), updated_at = @now
        WHERE submitted = 0`,
     )
-    .run({ session_id: sessionId, phone: f.parentPhone, data: JSON.stringify(f), step, now });
+    .run({ session_id: sessionId, phone: f.parentPhone, data: JSON.stringify(f), step, now, site });
 }
 
 export function markHackathonLeadSubmitted(sessionId: string): void {
