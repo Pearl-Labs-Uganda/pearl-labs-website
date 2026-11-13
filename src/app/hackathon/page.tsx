@@ -5,13 +5,14 @@ import MicrosoftClarity from "@/components/MicrosoftClarity";
 export const metadata: Metadata = {
   title: "STEM Innovation Hackathon — Pearl AI Labs",
   description:
-    "Pre-register for a one-week STEM hackathon for school learners at the National ICT Innovation Hub, Nakawa. Winning teams get first priority for the Technotion World Cup in Malaysia.",
+    "Register for a one-week STEM hackathon for school learners at the National ICT Innovation Hub, Nakawa. Winning teams get first priority for the Technotion World Cup in Malaysia.",
 };
 
 export default function HackathonPage() {
   return (
     <>
-      <MicrosoftClarity />
+      {/* The hackathon has its own Clarity project. Project ids are public (they ship in the page). */}
+      <MicrosoftClarity projectId={process.env.NEXT_PUBLIC_HACKATHON_CLARITY_ID ?? "zctady31ls"} />
       <HackathonRegister />
     </>
   );

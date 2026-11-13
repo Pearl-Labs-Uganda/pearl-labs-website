@@ -35,11 +35,29 @@ export function shouldTrack(): boolean {
   return !hasAnalyticsOptOut() && !isOptingOutNow();
 }
 
+// An anonymous random id kept in this browser, so dashboards can count unique visitors
+// instead of page loads. Not tied to any name, phone or email.
+const VISITOR_KEY = "pl_vid";
+export function visitorId(): string {
+  try {
+    let id = window.localStorage.getItem(VISITOR_KEY);
+    if (!id || !/^[A-Za-z0-9_-]{8,64}$/.test(id)) {
+      id = `v_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
+      window.localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 export function trackEvent(name: string, params?: Record<string, unknown>): void {
   if (typeof window === "undefined" || !shouldTrack()) return;
 
-  const w = window as unknown as { gtag?: (...args: unknown[]) => void };
+  const w = window as unknown as { gtag?: (...args: unknown[]) => void; clarity?: (...args: unknown[]) => void };
   w.gtag?.("event", name, params);
+  // Clarity custom event, so its recordings can be filtered by step (e.g. hackathon_child_done).
+  w.clarity?.("event", name);
 
   // Mirrors apply_view / form_started / form_submitted into our own SQLite table
   // (see src/lib/analyticsEvents.ts) so they show up on the dev dashboard without
@@ -48,7 +66,7 @@ export function trackEvent(name: string, params?: Record<string, unknown>): void
   fetch("/api/analytics-event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: name }),
+    body: JSON.stringify({ type: name, visitorId: visitorId() }),
     keepalive: true,
   }).catch(() => {});
 }

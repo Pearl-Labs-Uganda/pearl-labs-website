@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { applyOptOutFromUrl, shouldTrack } from '@/lib/analytics';
 
-export default function MicrosoftClarity() {
-  const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
+// A page can use its own Clarity project (e.g. /hackathon); otherwise the site-wide one.
+export default function MicrosoftClarity({ projectId }: { projectId?: string } = {}) {
+  const CLARITY_ID = projectId ?? process.env.NEXT_PUBLIC_CLARITY_ID;
   // Start disabled on both server and first client render so hydration matches;
   // the real opt-out check only runs after mount, once cookies are readable.
   const [enabled, setEnabled] = useState(false);

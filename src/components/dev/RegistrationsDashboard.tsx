@@ -740,10 +740,10 @@ export default function RegistrationsDashboard({
           Bootcamp Registrations &amp; Analytics
         </h1>
         <Link
-          href="/pl-a9004ed60a/hackathon"
+          href="/pl-ac/hackathon"
           style={{ fontSize: 13, fontWeight: 700, color: ORANGE, textDecoration: "none", marginLeft: "auto" }}
         >
-          Hackathon pre-registrations →
+          Hackathon desk →
         </Link>
         <button
           type="button"

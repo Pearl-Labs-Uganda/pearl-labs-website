@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { COOKIE_NAME, isValidSessionToken } from "@/lib/devAuth";
+import { HACKATHON_BASE, HACKATHON_COOKIE, isValidHackathonToken } from "@/lib/hackathonAuth";
 
 const DASHBOARD_BASE = "/pl-a9004ed60a";
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === `${DASHBOARD_BASE}/login`) {
+  const path = request.nextUrl.pathname;
+
+  // Hackathon staff area: its own password and cookie.
+  if (path === HACKATHON_BASE || path.startsWith(`${HACKATHON_BASE}/`)) {
+    if (path === `${HACKATHON_BASE}/login`) return NextResponse.next();
+    if (!(await isValidHackathonToken(request.cookies.get(HACKATHON_COOKIE)?.value))) {
+      return NextResponse.redirect(new URL(`${HACKATHON_BASE}/login`, request.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (path === `${DASHBOARD_BASE}/login`) {
     return NextResponse.next();
   }
 
@@ -17,5 +29,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/pl-a9004ed60a/:path*"],
+  matcher: ["/pl-a9004ed60a/:path*", "/pl-ac", "/pl-ac/:path*"],
 };

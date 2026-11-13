@@ -63,28 +63,47 @@ CREATE TABLE IF NOT EXISTS incomplete_registrations (
   submitted INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS hackathon_registrations (
+-- Hackathon registrations (pearllabs.ug/hackathon): parent, child, payment.
+CREATE TABLE IF NOT EXISTS hackathon_signups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id TEXT UNIQUE,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
+  parent_name TEXT NOT NULL,
+  relationship TEXT NOT NULL,
+  parent_phone TEXT NOT NULL,
+  parent_email TEXT NOT NULL,
   learner_name TEXT NOT NULL,
   age TEXT NOT NULL,
   gender TEXT NOT NULL,
   school TEXT NOT NULL,
   class_grade TEXT NOT NULL,
-  parent_name TEXT NOT NULL,
-  relationship TEXT NOT NULL,
-  parent_phone TEXT NOT NULL,
-  parent_email TEXT NOT NULL,
   week TEXT NOT NULL,
   interests TEXT NOT NULL,
   has_laptop TEXT NOT NULL,
   trip TEXT NOT NULL,
   passport TEXT NOT NULL,
-  hear_about TEXT NOT NULL,
+  photo_consent TEXT NOT NULL,
   parent_consent INTEGER NOT NULL,
-  photo_consent TEXT NOT NULL
+  payment_method TEXT NOT NULL,
+  transaction_id TEXT,
+  amount_due INTEGER NOT NULL,
+  verified INTEGER NOT NULL DEFAULT 0,
+  verified_at TEXT
+);
+
+-- Hackathon forms started but not submitted: saved once the parent's phone has 10 digits.
+CREATE TABLE IF NOT EXISTS hackathon_leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id TEXT UNIQUE NOT NULL,
+  phone TEXT NOT NULL,
+  data TEXT NOT NULL,
+  step INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  submitted INTEGER NOT NULL DEFAULT 0,
+  contacted INTEGER NOT NULL DEFAULT 0,
+  dismissed INTEGER NOT NULL DEFAULT 0
 );
 `;
 
@@ -128,6 +147,17 @@ const REGISTRATIONS_MIGRATION_COLUMNS: Record<string, string> = {
   session_id: "TEXT",
 };
 
+// An anonymous per-browser id (localStorage), so the dashboards can count unique visitors
+// rather than page loads. Rows from before it existed have NULL.
+// A random link token per registration, so a family can add their MoMo transaction ID later.
+const HACKATHON_SIGNUP_MIGRATION_COLUMNS: Record<string, string> = {
+  pay_token: "TEXT",
+};
+
+const ANALYTICS_MIGRATION_COLUMNS: Record<string, string> = {
+  visitor_id: "TEXT",
+};
+
 function migrateColumns(
   db: Database.Database,
   table: string,
@@ -157,6 +187,8 @@ export function getDb(): Database.Database {
   instance.exec(SCHEMA);
   migrateColumns(instance, "incomplete_registrations", INCOMPLETE_LEAD_MIGRATION_COLUMNS);
   migrateColumns(instance, "registrations", REGISTRATIONS_MIGRATION_COLUMNS);
+  migrateColumns(instance, "analytics_events", ANALYTICS_MIGRATION_COLUMNS);
+  migrateColumns(instance, "hackathon_signups", HACKATHON_SIGNUP_MIGRATION_COLUMNS);
   return instance;
 }
 

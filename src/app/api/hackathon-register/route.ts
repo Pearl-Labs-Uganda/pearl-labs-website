@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientKey, createRateLimiter } from "@/lib/placement";
 import { cleanFields, fieldErrors, readFields } from "@/lib/hackathon";
-import { saveHackathonRegistration } from "@/lib/hackathonStore";
+import { markHackathonLeadSubmitted, saveHackathonSignup } from "@/lib/hackathonStore";
 import { sendHackathonParentEmail, sendHackathonStaffEmail } from "@/lib/hackathonEmail";
 
 export const runtime = "nodejs";
@@ -31,15 +31,19 @@ export async function POST(request: Request) {
   const sessionId =
     typeof body.sessionId === "string" && /^[A-Za-z0-9_-]{8,80}$/.test(body.sessionId) ? body.sessionId : null;
 
-  let saved: { id: number; isNew: boolean } | null = null;
+  let saved: { id: number; isNew: boolean; payToken: string } | null = null;
   try {
-    saved = saveHackathonRegistration(fields, sessionId);
+    saved = saveHackathonSignup(fields, sessionId);
+    if (sessionId) markHackathonLeadSubmitted(sessionId);
   } catch (error) {
     console.error("Hackathon registration NOT saved:", error);
   }
 
+  // The family's own link for adding the MoMo transaction ID later.
+  const payToken = saved && fields.paymentMethod === "MTN MoMo" ? saved.payToken : null;
+
   // A resubmit of the same draft (retry, double-click) doesn't email again.
-  if (saved && !saved.isNew) return NextResponse.json({ ok: true });
+  if (saved && !saved.isNew) return NextResponse.json({ ok: true, payToken });
 
   let staffEmailed = false;
   try {
@@ -57,10 +61,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    await sendHackathonParentEmail(fields);
+    await sendHackathonParentEmail(fields, payToken);
   } catch (error) {
     console.error("Hackathon 'received' email to the parent failed:", error);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, payToken });
 }

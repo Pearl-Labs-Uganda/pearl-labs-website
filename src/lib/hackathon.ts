@@ -1,10 +1,13 @@
-// STEM Innovation Hackathon pre-registration (pearllabs.ug/hackathon → website SQLite).
-// Record-only for now: no payment step. Pure rules shared by the form, the API route and
-// the staff page. No imports, so `node --test` can run it directly.
+// STEM Innovation Hackathon registration (pearllabs.ug/hackathon → website SQLite).
+// Three steps: parent, child, payment. Pure rules shared by the form, the API route and the
+// staff page. No imports, so `node --test` can run it directly.
 
+export const FEE_UGX = 150_000;
+export const MERCHANT_CODE = "07778381"; // same MTN MoMo merchant code as the bootcamp
+export const PAYMENT_METHODS = ["MTN MoMo", "Cash"] as const;
 export const GENDERS = ["Male", "Female"] as const;
 export const YES_NO = ["Yes", "No"] as const;
-export const WEEKS = { dec7: "7–12 Dec", dec14: "14–19 Dec", either: "Either week" } as const;
+export const WEEKS = { dec7: "7–12 Dec", dec14: "14–19 Dec" } as const;
 export const INTERESTS = {
   drones: "Drones",
   robotics: "Robotics",
@@ -12,51 +15,68 @@ export const INTERESTS = {
   printing_3d: "3D printing",
   aerospace: "Aerospace design",
 } as const;
-export const RELATIONSHIPS = ["Mother", "Father", "Guardian", "Other"] as const;
-export const HEAR_ABOUT = [
-  "My school",
-  "A demo day",
-  "Parents' workshop",
-  "Social media",
-  "Friend or family",
-  "Other",
-] as const;
+export const RELATIONSHIPS = ["Mother", "Father", "Guardian"] as const;
 
 export interface HackathonFields {
+  // 1 · Parent
+  parentName: string;
+  relationship: string;
+  parentPhone: string;
+  parentEmail: string;
+  // 2 · Child
   learnerName: string;
   age: string;
   gender: string;
   school: string;
   classGrade: string;
-  parentName: string;
-  relationship: string;
-  parentPhone: string;
-  parentEmail: string;
   week: string;
   interests: string[];
   hasLaptop: string;
   trip: string;
-  passport: string;
-  hearAbout: string;
-  parentConsent: boolean;
+  passport: string; // only asked when trip is "Yes"
   photoConsent: string;
+  // 3 · Payment
+  paymentMethod: string;
+  transactionId: string; // MoMo only; may be added later through the family's pay link
+  parentConsent: boolean;
 }
+
+export type Step = 0 | 1 | 2;
+export const STEPS = ["Parent", "Child", "Payment"] as const;
+
+const STEP_KEYS: Record<Step, (keyof HackathonFields)[]> = {
+  0: ["parentName", "relationship", "parentPhone", "parentEmail"],
+  1: ["learnerName", "age", "gender", "school", "classGrade", "week", "interests", "hasLaptop", "trip", "passport", "photoConsent"],
+  2: ["paymentMethod", "transactionId", "parentConsent"],
+};
+export const CHILD_AND_PAYMENT_KEYS = [...STEP_KEYS[1], ...STEP_KEYS[2]];
 
 export interface HackathonRow extends HackathonFields {
   id: number;
+  payToken: string | null;
+  amountDue: number;
+  verified: boolean;
+  verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export const emptyFields = (): HackathonFields => ({
-  learnerName: "", age: "", gender: "", school: "", classGrade: "",
   parentName: "", relationship: "", parentPhone: "", parentEmail: "",
-  week: "", interests: [], hasLaptop: "", trip: "", passport: "", hearAbout: "",
-  parentConsent: false, photoConsent: "",
+  learnerName: "", age: "", gender: "", school: "", classGrade: "", week: "", interests: [],
+  hasLaptop: "", trip: "", passport: "", photoConsent: "",
+  paymentMethod: "", transactionId: "", parentConsent: false,
 });
 
 const INTEREST_KEYS = Object.keys(INTERESTS);
 const oneOf = (list: readonly string[], v: string) => list.includes(v);
+
+// MTN MoMo references are 8+ letters/digits and always contain digits — which also rules out
+// "pending", "not paid yet" and the like.
+export function isMomoTransactionId(raw: string): boolean {
+  const v = raw.replace(/\s+/g, "");
+  return /^[A-Za-z0-9]{8,40}$/.test(v) && /\d/.test(v);
+}
 
 export function fieldErrors(f: HackathonFields): Partial<Record<keyof HackathonFields, string>> {
   const e: Partial<Record<keyof HackathonFields, string>> = {};
@@ -65,42 +85,61 @@ export function fieldErrors(f: HackathonFields): Partial<Record<keyof HackathonF
     if (!v) e[key] = `Enter the ${label}`;
     else if (v.length > max) e[key] = `Keep the ${label} under ${max} characters`;
   };
-  need("learnerName", f.learnerName, "learner's full name", 120);
-  const age = Number(f.age.trim());
-  if (!/^\d{1,2}$/.test(f.age.trim()) || age < 6 || age > 25) e.age = "Enter the learner's age in years";
-  if (!oneOf(GENDERS, f.gender)) e.gender = "Choose an option";
-  need("school", f.school, "school", 160);
-  need("classGrade", f.classGrade, "class", 40);
   need("parentName", f.parentName, "parent or guardian's name", 120);
-  if (!oneOf(RELATIONSHIPS, f.relationship)) e.relationship = "Choose an option";
+  if (!oneOf(RELATIONSHIPS, f.relationship)) e.relationship = "Choose one";
   const digits = f.parentPhone.replace(/\D/g, "");
   if (digits.length < 9 || digits.length > 15) e.parentPhone = "Enter a valid phone number";
   if (!/^\S+@\S+\.\S+$/.test(f.parentEmail.trim()) || f.parentEmail.trim().length > 200)
     e.parentEmail = "Enter a valid email address";
+
+  need("learnerName", f.learnerName, "child's full name", 120);
+  const age = Number(f.age.trim());
+  if (!/^\d{1,2}$/.test(f.age.trim()) || age < 6 || age > 25) e.age = "Enter the age in years";
+  if (!oneOf(GENDERS, f.gender)) e.gender = "Choose one";
+  need("school", f.school, "school", 160);
+  need("classGrade", f.classGrade, "class", 40);
   if (!Object.hasOwn(WEEKS, f.week)) e.week = "Choose a week";
   if (f.interests.length === 0 || f.interests.some((i) => !INTEREST_KEYS.includes(i)))
     e.interests = "Tick at least one";
-  if (!oneOf(YES_NO, f.hasLaptop)) e.hasLaptop = "Choose an option";
-  if (!oneOf(YES_NO, f.trip)) e.trip = "Choose an option";
-  if (!oneOf(YES_NO, f.passport)) e.passport = "Choose an option";
-  if (!oneOf(HEAR_ABOUT, f.hearAbout)) e.hearAbout = "Choose an option";
-  if (f.parentConsent !== true) e.parentConsent = "A parent or guardian must agree before registering";
-  if (!oneOf(YES_NO, f.photoConsent)) e.photoConsent = "Choose an option";
+  if (!oneOf(YES_NO, f.hasLaptop)) e.hasLaptop = "Choose one";
+  if (!oneOf(YES_NO, f.trip)) e.trip = "Choose one";
+  if (f.trip === "Yes" && !oneOf(YES_NO, f.passport)) e.passport = "Choose one";
+  if (!oneOf(YES_NO, f.photoConsent)) e.photoConsent = "Choose one";
+
+  if (!oneOf(PAYMENT_METHODS, f.paymentMethod)) e.paymentMethod = "Choose how you'll pay";
+  // A parent who has paid by MoMo can finish without the ID to hand; we ask for it afterwards.
+  else if (f.paymentMethod === "MTN MoMo" && f.transactionId.trim() && !isMomoTransactionId(f.transactionId))
+    e.transactionId = "That doesn't look like a MoMo transaction ID — check the SMS, or leave it blank for now";
+  if (f.parentConsent !== true) e.parentConsent = "Tick to agree before registering";
   return e;
 }
 
-// Trimmed, with interests in a fixed order and no repeats.
+export function stepErrors(step: Step, f: HackathonFields): Partial<Record<keyof HackathonFields, string>> {
+  const all = fieldErrors(f);
+  const out: Partial<Record<keyof HackathonFields, string>> = {};
+  for (const k of STEP_KEYS[step]) if (all[k]) out[k] = all[k];
+  return out;
+}
+
+export function firstStepWithErrors(errors: Partial<Record<keyof HackathonFields, string>>): Step | null {
+  for (const step of [0, 1, 2] as Step[]) if (STEP_KEYS[step].some((k) => errors[k])) return step;
+  return null;
+}
+
+// Trimmed; interests in a fixed order; no passport answer without the trip; no MoMo ID for cash.
 export function cleanFields(f: HackathonFields): HackathonFields {
   return {
     ...f,
+    parentName: f.parentName.trim(),
+    parentPhone: f.parentPhone.trim(),
+    parentEmail: f.parentEmail.trim(),
     learnerName: f.learnerName.trim(),
     age: f.age.trim(),
     school: f.school.trim(),
     classGrade: f.classGrade.trim(),
-    parentName: f.parentName.trim(),
-    parentPhone: f.parentPhone.trim(),
-    parentEmail: f.parentEmail.trim(),
     interests: INTEREST_KEYS.filter((k) => f.interests.includes(k)),
+    passport: f.trip === "Yes" ? f.passport : "",
+    transactionId: f.paymentMethod === "MTN MoMo" ? f.transactionId.replace(/\s+/g, "") : "",
   };
 }
 
@@ -110,36 +149,83 @@ export function readFields(body: unknown): HackathonFields {
   const s = (k: string) => (typeof o[k] === "string" ? (o[k] as string) : "");
   const list = Array.isArray(o.interests) ? o.interests.filter((v): v is string => typeof v === "string") : [];
   return {
-    learnerName: s("learnerName"), age: s("age"), gender: s("gender"), school: s("school"),
-    classGrade: s("classGrade"), parentName: s("parentName"), relationship: s("relationship"),
-    parentPhone: s("parentPhone"), parentEmail: s("parentEmail"), week: s("week"), interests: list,
-    hasLaptop: s("hasLaptop"), trip: s("trip"), passport: s("passport"), hearAbout: s("hearAbout"),
-    parentConsent: o.parentConsent === true, photoConsent: s("photoConsent"),
+    parentName: s("parentName"), relationship: s("relationship"), parentPhone: s("parentPhone"),
+    parentEmail: s("parentEmail"), learnerName: s("learnerName"), age: s("age"), gender: s("gender"),
+    school: s("school"), classGrade: s("classGrade"), week: s("week"), interests: list,
+    hasLaptop: s("hasLaptop"), trip: s("trip"), passport: s("passport"), photoConsent: s("photoConsent"),
+    paymentMethod: s("paymentMethod"), transactionId: s("transactionId"), parentConsent: o.parentConsent === true,
   };
 }
 
+export const formatUgx = (n: number) => `UGX ${n.toLocaleString("en-US")}`;
 export const weekLabel = (k: string) => (Object.hasOwn(WEEKS, k) ? WEEKS[k as keyof typeof WEEKS] : k);
 export const interestsText = (keys: string[]) =>
   keys.map((k) => (Object.hasOwn(INTERESTS, k) ? INTERESTS[k as keyof typeof INTERESTS] : k)).join(", ");
 
+export type PaymentStatus = "Verified" | "Awaiting check" | "Needs MoMo ID" | "Paying cash";
+export function paymentStatus(r: Pick<HackathonRow, "verified" | "paymentMethod" | "transactionId">): PaymentStatus {
+  if (r.verified) return "Verified";
+  if (r.paymentMethod === "Cash") return "Paying cash";
+  return r.transactionId ? "Awaiting check" : "Needs MoMo ID";
+}
+
+// ---- Unfinished forms (leads) ----
+// Saved from the moment the parent's phone has 10+ digits, so nobody who started is lost.
+export const leadPhoneReady = (phone: string) => phone.replace(/\D/g, "").length >= 10;
+export const samePhone = (a: string, b: string) => {
+  const tail = (p: string) => p.replace(/\D/g, "").slice(-9); // ignores 0 / +256 prefixes
+  return tail(a).length === 9 && tail(a) === tail(b);
+};
+
+export interface HackathonLead {
+  id: number;
+  step: Step; // furthest step reached
+  fields: HackathonFields;
+  contacted: boolean;
+  dismissed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// What a lead save may store: known fields only, strings capped, so a draft can't bloat the database.
+export function leadFields(body: unknown): HackathonFields {
+  const f = readFields(body);
+  const cap = (v: string) => v.slice(0, 200);
+  return {
+    ...f,
+    parentName: cap(f.parentName), relationship: cap(f.relationship), parentPhone: cap(f.parentPhone),
+    parentEmail: cap(f.parentEmail), learnerName: cap(f.learnerName), age: cap(f.age), gender: cap(f.gender),
+    school: cap(f.school), classGrade: cap(f.classGrade), week: cap(f.week), interests: f.interests.slice(0, 10).map(cap),
+    hasLaptop: cap(f.hasLaptop), trip: cap(f.trip), passport: cap(f.passport), photoConsent: cap(f.photoConsent),
+    paymentMethod: cap(f.paymentMethod), transactionId: cap(f.transactionId),
+  };
+}
+
 // The answers as label/value pairs, in form order — for emails.
 export function summaryRows(f: HackathonFields): [string, string][] {
   return [
-    ["Learner", f.learnerName],
+    ["Parent / guardian", `${f.parentName} (${f.relationship})`],
+    ["Phone", f.parentPhone],
+    ["Email", f.parentEmail],
+    ["Child", f.learnerName],
     ["Age", f.age],
     ["Gender", f.gender],
     ["School", f.school],
     ["Class", f.classGrade],
-    ["Parent / guardian", `${f.parentName} (${f.relationship})`],
-    ["Phone", f.parentPhone],
-    ["Email", f.parentEmail],
-    ["Preferred week", weekLabel(f.week)],
+    ["Week", weekLabel(f.week)],
     ["Interests", interestsText(f.interests)],
     ["Has a laptop", f.hasLaptop],
-    ["Also applying for the trip", f.trip],
-    ["Has a passport", f.passport],
-    ["Heard about it from", f.hearAbout],
+    ["Applying for the trip", f.trip === "Yes" ? `Yes (passport: ${f.passport})` : "No"],
     ["Photo consent", f.photoConsent],
+    ["Fee", formatUgx(FEE_UGX)],
+    [
+      "Payment",
+      f.paymentMethod === "Cash"
+        ? "Cash"
+        : f.transactionId
+          ? `MTN MoMo — transaction ID ${f.transactionId}`
+          : "MTN MoMo — says they've paid; transaction ID not given yet",
+    ],
   ];
 }
 
@@ -152,15 +238,16 @@ function csvCell(value: unknown): string {
 // Spreadsheet-ready; the BOM makes Excel read the dashes and apostrophes correctly.
 export function hackathonCsv(rows: HackathonRow[]): string {
   const headers = [
-    "Registered", "Learner", "Age", "Gender", "School", "Class", "Parent / guardian", "Relationship",
-    "Phone", "Email", "Preferred week", "Interests", "Has laptop", "Trip", "Passport", "Heard from",
-    "Photo consent",
+    "Registered", "Child", "Age", "Gender", "School", "Class", "Week", "Interests", "Has laptop", "Trip",
+    "Passport", "Photo consent", "Parent / guardian", "Relationship", "Phone", "Email", "Amount (UGX)",
+    "Payment method", "Transaction ID", "Status",
   ];
   const lines = rows.map((r) =>
     [
       r.createdAt.slice(0, 16).replace("T", " "), r.learnerName, r.age, r.gender, r.school, r.classGrade,
-      r.parentName, r.relationship, r.parentPhone, r.parentEmail, weekLabel(r.week), interestsText(r.interests),
-      r.hasLaptop, r.trip, r.passport, r.hearAbout, r.photoConsent,
+      weekLabel(r.week), interestsText(r.interests), r.hasLaptop, r.trip, r.passport, r.photoConsent,
+      r.parentName, r.relationship, r.parentPhone, r.parentEmail, r.amountDue, r.paymentMethod,
+      r.transactionId, paymentStatus(r),
     ].map(csvCell).join(","),
   );
   return "﻿" + [headers.map(csvCell).join(","), ...lines].join("\r\n");
@@ -172,6 +259,7 @@ export function tally(values: string[]): { name: string; count: number }[] {
   const m = new Map<string, { name: string; count: number }>();
   for (const v of values) {
     const key = v.trim().replace(/\s+/g, " ").toLowerCase();
+    if (!key) continue;
     const hit = m.get(key);
     if (hit) hit.count += 1;
     else m.set(key, { name: v.trim().replace(/\s+/g, " "), count: 1 });
