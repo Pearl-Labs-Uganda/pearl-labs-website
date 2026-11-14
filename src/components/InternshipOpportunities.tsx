@@ -236,7 +236,7 @@ export default function InternshipOpportunities() {
           24 Aug – 4 Sep 2026 at National ICT Hub, Nakawa.
           Email{" "}
           <strong>pearllabsug@gmail.com</strong> or
-          call <strong>+256 763 839356</strong> with any questions.
+          call <strong>0793 662 227</strong> with any questions.
         </p>
         <Link href="/apply" style={{ ...s.btnSolid, fontSize: 16, padding: "16px 52px" }}>
           Register Now →

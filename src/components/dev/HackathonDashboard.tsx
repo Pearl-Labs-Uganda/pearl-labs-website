@@ -7,6 +7,7 @@ import {
   FEE_UGX,
   INTERESTS,
   STEPS,
+  HACKATHON_WEEK,
   WEEKS,
   formatUgx,
   hackathonCsv,
@@ -309,7 +310,9 @@ export default function HackathonDashboard({ rows, leads, dismissedLeads, funnel
       tripPassport: rows.filter((r) => r.trip === "Yes" && r.passport === "Yes").length,
       needLaptop: rows.filter((r) => r.hasLaptop === "No").length,
       schools: tally(rows.map((r) => r.school)),
-      weeks: Object.entries(WEEKS).map(([k, name]) => ({ name, count: rows.filter((r) => r.week === k).length })),
+      weeks: Object.entries(WEEKS)
+        .filter(([k]) => k === HACKATHON_WEEK || rows.some((r) => r.week === k))
+        .map(([k, name]) => ({ name, count: rows.filter((r) => r.week === k).length })),
       interests: Object.entries(INTERESTS)
         .map(([k, name]) => ({ name, count: rows.filter((r) => r.interests.includes(k)).length }))
         .sort((a, b) => b.count - a.count),
@@ -362,7 +365,7 @@ export default function HackathonDashboard({ rows, leads, dismissedLeads, funnel
         <section className="hk-hero">
           <div>
             <p className="hk-eyebrow">National ICT Innovation Hub · December 2026</p>
-            <h1>STEM Innovation Hackathon</h1>
+            <h1>Technoxian Hackathon</h1>
             <p className="hk-muted">Fee {formatUgx(FEE_UGX)} per child · MoMo and cash</p>
           </div>
           <button type="button" className="hk-btn hk-btn-primary" onClick={() => download(rows)} disabled={rows.length === 0}>

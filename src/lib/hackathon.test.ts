@@ -28,6 +28,7 @@ test("required fields, formats and options", () => {
   assert.ok(fieldErrors(good({ parentEmail: "grace@" })).parentEmail);
   assert.ok(fieldErrors(good({ week: "either" })).week);
   assert.ok(fieldErrors(good({ week: "constructor" })).week);
+  assert.ok(fieldErrors(good({ week: "dec14" })).week, "only the 7–12 Dec week is open");
   assert.ok(fieldErrors(good({ interests: [] })).interests);
   assert.ok(fieldErrors(good({ interests: ["cooking"] })).interests);
   assert.ok(fieldErrors(good({ parentConsent: false })).parentConsent);
@@ -102,4 +103,10 @@ test("tally groups typed names regardless of case and spacing, most first", () =
     { name: "Kampala High", count: 2 },
     { name: "Gayaza", count: 1 },
   ]);
+});
+
+test("readFields always books the 7–12 Dec week, whatever the client sends", () => {
+  assert.equal(readFields({ week: "dec14" }).week, "dec7");
+  assert.equal(readFields({}).week, "dec7");
+  assert.equal(emptyFields().week, "dec7");
 });

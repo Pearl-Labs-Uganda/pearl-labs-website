@@ -98,7 +98,7 @@ export async function sendApplicantEmail(f: PlacementFields) {
     "Our team will review it and contact you directly.",
     "",
     "Pearl AI Labs",
-    "pearllabsug@gmail.com · +256 763 839356",
+    "pearllabsug@gmail.com · 0793 662 227",
   ];
   await mailer.sendMail({
     from: process.env.SMTP_FROM ?? `Pearl AI Labs <${user}>`,

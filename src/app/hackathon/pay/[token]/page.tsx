@@ -24,12 +24,12 @@ export default async function HackathonPayPage({ params }: { params: Promise<{ t
       <style>{css}</style>
       <div className="hp-wrap">
         <Link href="/hackathon" className="hp-back">
-          ← STEM Innovation Hackathon
+          ← Technoxian Hackathon
         </Link>
         {!row ? (
           <>
             <h1>This link isn&apos;t valid</h1>
-            <p>Check that you copied the whole link, or contact us on +256 763 839356.</p>
+            <p>Check that you copied the whole link, or contact us on 0793 662 227.</p>
           </>
         ) : status === "Verified" ? (
           <>
@@ -54,7 +54,7 @@ export default async function HackathonPayPage({ params }: { params: Promise<{ t
             <HackathonMomoId token={token} learnerName={first} />
           </>
         )}
-        <p className="hp-help">Questions? Call +256 763 839356 or email pearllabsug@gmail.com.</p>
+        <p className="hp-help">Questions? Call 0793 662 227 or email pearllabsug@gmail.com.</p>
       </div>
     </div>
   );

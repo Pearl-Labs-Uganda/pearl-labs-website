@@ -14,8 +14,8 @@ export async function sendHackathonStaffEmail(f: HackathonFields, saved: boolean
     ? `Check the payment and see everyone: ${STAFF_PAGE}`
     : "⚠ This registration could NOT be saved to the website database — this email is the only copy.";
   const tag = f.paymentMethod === "Cash" ? "[CASH] " : f.transactionId ? "[MOMO] " : "[MOMO, NO ID YET] ";
-  const text = ["STEM Innovation Hackathon — registration", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", where].join("\n");
-  const html = `<h2>STEM Innovation Hackathon — registration</h2>${rows
+  const text = ["Technoxian Hackathon — registration", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", where].join("\n");
+  const html = `<h2>Technoxian Hackathon — registration</h2>${rows
     .map(([k, v]) => `<p><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</p>`)
     .join("")}<p>${escapeHtml(where)}</p>`;
   await mailer.sendMail({
@@ -41,20 +41,20 @@ export async function sendHackathonParentEmail(f: HackathonFields, payToken: str
   const lines = [
     `Hi ${first},`,
     "",
-    `${f.learnerName} is registered for the STEM Innovation Hackathon at the National ICT Innovation Hub, Nakawa, for the week of ${weekLabel(f.week)}.`,
+    `${f.learnerName} is registered for the Technoxian Hackathon at the National ICT Innovation Hub, Nakawa, for the week of ${weekLabel(f.week)}.`,
     payment,
     ...(f.trip === "Yes" ? ["We've also noted that they'd like to apply for the trip. We'll share the details."] : []),
     "",
     "We'll be in touch with the programme and what to bring.",
     "",
     "Pearl AI Labs and AeRoCAD Learners",
-    "pearllabsug@gmail.com · +256 763 839356",
+    "pearllabsug@gmail.com · 0793 662 227",
   ];
   await mailer.sendMail({
     from: process.env.SMTP_FROM ?? `Pearl AI Labs <${user}>`,
     to: f.parentEmail,
     replyTo: staffInbox(user),
-    subject: `${f.learnerName} is registered for the STEM Innovation Hackathon`,
+    subject: `${f.learnerName} is registered for the Technoxian Hackathon`,
     text: lines.join("\n"),
     html: lines.map((l) => (l ? `<p>${escapeHtml(l)}</p>` : "")).join(""),
   });

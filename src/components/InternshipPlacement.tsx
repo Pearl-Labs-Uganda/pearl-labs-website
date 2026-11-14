@@ -426,7 +426,7 @@ export default function InternshipPlacement() {
           {status === "sending" ? `Sending… ${progress}%` : "Submit application →"}
         </button>
         <p style={s.hint}>
-          Questions? Email <strong>pearllabsug@gmail.com</strong> or call <strong>+256 763 839356</strong>.
+          Questions? Email <strong>pearllabsug@gmail.com</strong> or call <strong>0793 662 227</strong>.
         </p>
       </form>
     </div>

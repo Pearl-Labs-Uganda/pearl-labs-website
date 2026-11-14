@@ -14,7 +14,8 @@ import {
   PAYMENT_METHODS,
   RELATIONSHIPS,
   STEPS,
-  WEEKS,
+  HACKATHON_DATES,
+  HACKATHON_WEEK,
   YES_NO,
   emptyFields,
   fieldErrors,
@@ -34,7 +35,7 @@ const highlights = [
     blurb: "A full week of hands-on building with drones, robotics, AI and coding, 3D printing and aerospace design, using real lab equipment.",
   },
   { title: "Pitch", blurb: "The week ends with a pitching day. Teams present what they built to a panel of judges." },
-  { title: "Malaysia", blurb: "The winning teams get first priority to represent Uganda at the Technotion World Cup in Malaysia." },
+  { title: "Malaysia", blurb: "The winning teams get first priority to represent Uganda at the Technoxian World Cup in Malaysia." },
 ];
 
 type Errors = Partial<Record<keyof HackathonFields, string>>;
@@ -63,7 +64,7 @@ export default function HackathonRegister() {
     try {
       const raw = window.localStorage.getItem(DRAFT_KEY);
       const draft = raw ? (JSON.parse(raw) as { form?: Partial<HackathonFields>; sessionId?: string; step?: Step }) : null;
-      if (draft?.form) setForm({ ...emptyFields(), ...draft.form });
+      if (draft?.form) setForm({ ...emptyFields(), ...draft.form, week: HACKATHON_WEEK });
       if (draft?.step === 1 || draft?.step === 2) setStep(draft.step);
       setSessionId(draft?.sessionId || newSessionId());
     } catch {
@@ -197,7 +198,7 @@ export default function HackathonRegister() {
           </div>
           <h1 className="hr-h2">You&apos;re registered</h1>
           <p className="hr-lead">
-            {form.learnerName} is registered for the STEM Innovation Hackathon ({WEEKS[form.week as keyof typeof WEEKS]}).{" "}
+            {form.learnerName} is registered for the Technoxian Hackathon ({HACKATHON_DATES}).{" "}
             {form.paymentMethod === "Cash"
               ? `Please bring ${formatUgx(FEE_UGX)} in cash to Pearl AI Labs before the hackathon starts.`
               : form.transactionId
@@ -282,7 +283,7 @@ export default function HackathonRegister() {
         </Link>
         <p className="hr-eyebrow">Opportunities · Hackathon</p>
         <h1 className="hr-h1">
-          STEM Innovation <em>Hackathon</em>
+          Technoxian <em>Hackathon</em>
         </h1>
         <p className="hr-lead">
           A one-week hackathon for school learners at the National ICT Innovation Hub, Nakawa, run by Pearl AI Labs and
@@ -291,7 +292,7 @@ export default function HackathonRegister() {
         <div className="hr-facts">
           <div>
             <span>When</span>
-            <strong>7–12 or 14–19 Dec</strong>
+            <strong>{HACKATHON_DATES}</strong>
           </div>
           <div>
             <span>Where</span>
@@ -364,7 +365,6 @@ export default function HackathonRegister() {
                 {field("school", "School")}
                 {choice("gender", "Gender", pairs(GENDERS))}
               </div>
-              {choice("week", "Which week?", Object.entries(WEEKS))}
               <div className="hr-field">
                 <span className="hr-label">What interests them most?</span>
                 <span className="hr-hint">Tick all that apply. We use this to form teams.</span>
@@ -476,7 +476,7 @@ export default function HackathonRegister() {
         </div>
 
         <p className="hr-help">
-          Questions? Email <strong>pearllabsug@gmail.com</strong> or call <strong>+256 763 839356</strong>.
+          Questions? Email <strong>pearllabsug@gmail.com</strong> or call <strong>0793 662 227</strong>.
         </p>
       </form>
     </div>

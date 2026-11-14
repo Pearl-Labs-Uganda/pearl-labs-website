@@ -67,7 +67,7 @@ export default async function ResumeApplicationPage({
             registration.
           </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.95rem", color: "#111D23" }}>
-            <strong>pearllabsug@gmail.com</strong> · <strong style={{ color: ORANGE }}>+256 763 839356</strong>
+            <strong>pearllabsug@gmail.com</strong> · <strong style={{ color: ORANGE }}>0793 662 227</strong>
           </p>
           <a href="/apply" style={{ display: "inline-block", marginTop: 24, color: ORANGE, fontWeight: 700, textDecoration: "none" }}>
             Start a new registration →

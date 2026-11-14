@@ -1,4 +1,4 @@
-// STEM Innovation Hackathon registration (pearllabs.ug/hackathon → website SQLite).
+// Technoxian Hackathon registration (pearllabs.ug/hackathon → website SQLite).
 // Three steps: parent, child, payment. Pure rules shared by the form, the API route and the
 // staff page. No imports, so `node --test` can run it directly.
 
@@ -7,7 +7,10 @@ export const MERCHANT_CODE = "07778381"; // same MTN MoMo merchant code as the b
 export const PAYMENT_METHODS = ["MTN MoMo", "Cash"] as const;
 export const GENDERS = ["Male", "Female"] as const;
 export const YES_NO = ["Yes", "No"] as const;
+// Labels for every week ever offered (old sign-ups may hold dec14). New sign-ups are always HACKATHON_WEEK.
 export const WEEKS = { dec7: "7–12 Dec", dec14: "14–19 Dec" } as const;
+export const HACKATHON_WEEK = "dec7";
+export const HACKATHON_DATES = WEEKS[HACKATHON_WEEK];
 export const INTERESTS = {
   drones: "Drones",
   robotics: "Robotics",
@@ -51,7 +54,7 @@ export const STEPS = ["Parent", "Child", "Payment"] as const;
 
 const STEP_KEYS: Record<Step, (keyof HackathonFields)[]> = {
   0: ["parentName", "relationship", "parentPhone", "parentEmail"],
-  1: ["learnerName", "age", "gender", "school", "classGrade", "week", "interests", "hasLaptop", "trip", "passport", "photoConsent"],
+  1: ["learnerName", "age", "gender", "school", "classGrade", "interests", "hasLaptop", "trip", "passport", "photoConsent"],
   2: ["paymentMethod", "transactionId", "parentConsent"],
 };
 export const CHILD_AND_PAYMENT_KEYS = [...STEP_KEYS[1], ...STEP_KEYS[2]];
@@ -69,7 +72,7 @@ export interface HackathonRow extends HackathonFields {
 
 export const emptyFields = (): HackathonFields => ({
   parentName: "", relationship: "", parentPhone: "", parentEmail: "",
-  learnerName: "", age: "", gender: "", school: "", classGrade: "", week: "", interests: [],
+  learnerName: "", age: "", gender: "", school: "", classGrade: "", week: HACKATHON_WEEK, interests: [],
   hasLaptop: "", trip: "", passport: "", photoConsent: "",
   paymentMethod: "", transactionId: "", parentConsent: false,
 });
@@ -104,7 +107,7 @@ export function fieldErrors(f: HackathonFields): Partial<Record<keyof HackathonF
   if (!oneOf(GENDERS, f.gender)) e.gender = "Choose one";
   need("school", f.school, "school", 160);
   need("classGrade", f.classGrade, "class", 40);
-  if (!Object.hasOwn(WEEKS, f.week)) e.week = "Choose a week";
+  if (f.week !== HACKATHON_WEEK) e.week = "The hackathon runs " + HACKATHON_DATES;
   if (f.interests.length === 0 || f.interests.some((i) => !INTEREST_KEYS.includes(i)))
     e.interests = "Tick at least one";
   if (!oneOf(YES_NO, f.hasLaptop)) e.hasLaptop = "Choose one";
@@ -157,7 +160,7 @@ export function readFields(body: unknown): HackathonFields {
   return {
     parentName: s("parentName"), relationship: s("relationship"), parentPhone: s("parentPhone"),
     parentEmail: s("parentEmail"), learnerName: s("learnerName"), age: s("age"), gender: s("gender"),
-    school: s("school"), classGrade: s("classGrade"), week: s("week"), interests: list,
+    school: s("school"), classGrade: s("classGrade"), week: HACKATHON_WEEK, interests: list,
     hasLaptop: s("hasLaptop"), trip: s("trip"), passport: s("passport"), photoConsent: s("photoConsent"),
     paymentMethod: s("paymentMethod"), transactionId: s("transactionId"), parentConsent: o.parentConsent === true,
   };

@@ -1010,7 +1010,7 @@ export default function InternshipApply({
 
               <p style={s.paymentNote}>
                 Payment confirms your child&apos;s spot.
-                Contact: <strong>pearllabsug@gmail.com</strong> · <strong>+256 763 839356</strong>
+                Contact: <strong>pearllabsug@gmail.com</strong> · <strong>0793 662 227</strong>
               </p>
             </div>
           )}

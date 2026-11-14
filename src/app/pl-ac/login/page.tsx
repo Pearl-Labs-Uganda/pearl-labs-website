@@ -41,7 +41,7 @@ export default function HackathonLoginPage() {
           <span className="hkl-dot" /> Pearl AI Labs
         </div>
         <h1 className="hkl-title">Hackathon desk</h1>
-        <p className="hkl-sub">Registrations, payments and sign-ups for the STEM Innovation Hackathon.</p>
+        <p className="hkl-sub">Registrations, payments and sign-ups for the Technoxian Hackathon.</p>
         <form onSubmit={submit}>
           <label className="hkl-label" htmlFor="hkl-pw">
             Password
